@@ -1,0 +1,27 @@
+#!/usr/bin/env zsh
+set -o errexit # block commit if there are any issues reported
+cd "$(git rev-parse --show-toplevel)"
+#───────────────────────────────────────────────────────────────────────────────
+
+echo "Pre-Commit Hook"
+
+echo "(1/4) Biome"
+if [[ "$1" == "check-all" ]]; then
+	npx biome check --write --error-on-warnings --log-kind="compact"
+else
+	# `--staged` so unused things in unstaged files does not block commit
+	npx biome check --error-on-warnings --staged --no-errors-on-unmatched --log-kind="compact"
+fi
+
+echo "(2/4) TypeScript"
+npx tsc --noEmit --skipLibCheck --strict
+echo "Done."
+
+echo "(3/4) Knip"
+npx knip
+test -t || echo "Done."
+
+echo "(4/4) Markdownlint"
+npx markdownlint --ignore="node_modules" .
+echo "Done."
+echo

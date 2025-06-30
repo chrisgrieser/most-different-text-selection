@@ -1,0 +1,8 @@
+// DOCS https://knip.dev/overview/configuration
+{
+	"entry": ["src/main.ts", ".esbuild.mjs"],
+	"project": ["src/**/*.ts"],
+	"ignoreDependencies": ["markdownlint-cli"], // used in pre-commit hook & GitHub Action
+
+	"$schema": "https://unpkg.com/knip@5/schema-jsonc.json"
+}

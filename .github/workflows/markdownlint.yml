@@ -1,0 +1,16 @@
+name: Markdownlint check
+
+on:
+  # not on `push`, since that's covered by pre-commit checks
+  pull_request:
+    paths: ["**.md"]
+
+jobs:
+  markdownlint-check:
+    name: Markdownlint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DavidAnson/markdownlint-cli2-action@v20
+        with:
+          globs: "**/*.md"

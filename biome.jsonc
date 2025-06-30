@@ -1,0 +1,26 @@
+// DOCS https://biomejs.dev/reference/configuration/
+//──────────────────────────────────────────────────────────────────────────────
+{
+	"linter": {
+		"rules": {
+			"style": {
+				"useTemplate": "off", // too strict, simple concatenations are often fine
+				"useNamingConvention": "on"
+			}
+		}
+	},
+	"formatter": {
+		"useEditorconfig": true,
+		"lineWidth": 100, // needs to be set despite editorconfig https://github.com/biomejs/biome/issues/6475#issuecomment-2994126794
+		"formatWithErrors": true
+	},
+	"files": {
+		"ignoreUnknown": true
+	},
+	"vcs": {
+		"enabled": true,
+		"clientKind": "git",
+		"useIgnoreFile": true
+	},
+	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json"
+}

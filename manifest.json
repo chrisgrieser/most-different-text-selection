@@ -1,0 +1,6 @@
+{
+	"name": "Most different text selection",
+	"description": "Use embedding data from LLMs to determine the most different text in a given corpus.",
+	"author": "Christopher Grieser",
+	"version": "0.1"
+}
