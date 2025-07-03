@@ -11,15 +11,17 @@ await esbuild
 		entryPoints: ["src/main.ts"],
 		banner: { js: banner + "\n" },
 		outfile: "main.js",
+
+		platform: "node", // while using pure node
+		logLevel: "warning", // only output on build error
+
 		bundle: true,
 		external: [...builtins],
 		format: "cjs",
 		target: "es2022",
 		sourcemap: false,
 		minify: false,
-		drop: ["debugger"],
 		treeShaking: true,
-		logLevel: "info",
 		metafile: false,
 	})
 	.catch(() => process.exit(1));

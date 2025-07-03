@@ -3,7 +3,7 @@ set quiet := true
 #───────────────────────────────────────────────────────────────────────────────
 
 build-and-run:
-    node .esbuild.mjs &> /dev/null && node main.js
+    node .esbuild.mjs && node main.js
 
 check-all:
     git hook run pre-commit -- "check-all"
