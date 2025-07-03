@@ -1,35 +1,39 @@
 import { exec } from "node:child_process";
 import { writeFileSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
-// @ts-expect-error
+// @ts-expect-error due to missing types
 import cliProgress from "cli-progress";
 import {
 	DATA_FOLDER,
 	EMBEDDING_MODELS,
-	EMBEDDING_STORAGE_FILE,
+	EMBEDDING_OUTPUT_FILE,
 	MODEL_TO_USE,
 	OPENAI_API_KEY,
+	YAML_FRONTMATTER_READ_KEY,
 } from "./settings";
 
-async function getEmbeddingForFile(
+//──────────────────────────────────────────────────────────────────────────────
+
+async function requestEmbeddingForFile(
 	filepath: string,
-): Promise<{ embedding?: number[]; cost?: number }> {
+): Promise<{ embedding?: number[]; cost?: number; read?: boolean }> {
 	const model = EMBEDDING_MODELS[MODEL_TO_USE];
 
 	const fileRaw = await readFile(filepath, "utf-8");
-	const maxLength = model.maxInputTokens * 4; // rule of thumb: 1 token ~= 4 English characters
-	const fileContent = fileRaw
-		.replace(/---\n.*---\n/s, "") // remove frontmatter
-		.slice(0, maxLength);
+	const [frontmatter, fileContent] = fileRaw.match(/^---\n(.*?)\n---\n(.*)/s) || ["", fileRaw];
+	const maxLength = model.maxInputTokens * 4; // rule of thumb: 1 token ~= 4 English chars
+	const fileWasRead =
+		frontmatter
+			.split("\n")
+			.find((line) => line.startsWith(YAML_FRONTMATTER_READ_KEY + ":"))
+			?.trim()
+			.endsWith("true") || false;
 
 	// DOCS https://platform.openai.com/docs/guides/embeddings
 	const response = await fetch("https://api.openai.com/v1/embeddings", {
 		method: "POST",
-		headers: {
-			authorization: "Bearer " + OPENAI_API_KEY,
-			"Content-Type": "application/json",
-		},
-		body: JSON.stringify({ input: fileContent, model: model.name }),
+		headers: { authorization: "Bearer " + OPENAI_API_KEY, "Content-Type": "application/json" },
+		body: JSON.stringify({ input: fileContent.slice(0, maxLength), model: model.name }),
 	});
 	if (!response.ok) {
 		console.error(`OpenAI error: ${response.status} ${await response.text()}`);
@@ -39,7 +43,7 @@ async function getEmbeddingForFile(
 	const data = await response.json();
 	const embedding = data.data[0].embedding;
 	const cost = data.usage.total_tokens * model.costPerToken;
-	return { embedding: embedding, cost: cost };
+	return { embedding: embedding, cost: cost, read: fileWasRead };
 }
 
 //──────────────────────────────────────────────────────────────────────────────
@@ -58,13 +62,13 @@ async function run() {
 	bar.start(files.length, 0);
 
 	let totalCost = 0;
-	const embeddingsForAllFiles = [];
-
+	const embeddingsForAllFiles: { embedding: number[]; read: boolean; relPath: string }[] = [];
 	for (const file of files) {
 		const absPath = DATA_FOLDER + "/" + file;
-		const { cost, embedding } = await getEmbeddingForFile(absPath);
+		const { cost, embedding, read } = await requestEmbeddingForFile(absPath);
 		if (cost) totalCost += cost;
-		embeddingsForAllFiles.push(embedding || []);
+		if (!embedding) continue;
+		embeddingsForAllFiles.push({ embedding: embedding, read: read || false, relPath: file });
 		bar.increment();
 	}
 
@@ -81,7 +85,9 @@ async function run() {
 			creationDate: new Date().toISOString().slice(0, 19).replace("T", " "),
 		},
 	};
-	writeFileSync(EMBEDDING_STORAGE_FILE, JSON.stringify(data, null, 2));
-	if (process.platform === "darwin") exec(`open -R '${EMBEDDING_STORAGE_FILE}'`);
+	writeFileSync(EMBEDDING_OUTPUT_FILE, JSON.stringify(data, null, 2));
+
+	// reveal file if on macOS
+	if (process.platform === "darwin") exec(`open -R '${EMBEDDING_OUTPUT_FILE}'`);
 }
 run();

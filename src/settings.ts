@@ -1,13 +1,22 @@
 import { readFileSync } from "node:fs";
 
+//──────────────────────────────────────────────────────────────────────────────
+
 // TEMP this file stored outside of the repo
 const openaiApiKeyFile =
 	"/Users/chrisgrieser/Library/Mobile Documents/com~apple~CloudDocs/Dotfolder/private dotfiles/openai-api-key.txt";
 
 export const OPENAI_API_KEY = readFileSync(openaiApiKeyFile, "utf8");
 
-//──────────────────────────────────────────────────────────────────────────────
+// uses `.md` to `.txt` files in that folder (recursively)
+export const DATA_FOLDER = "/Users/chrisgrieser/Vaults/phd-data-analysis/Data/_ inbox";
 
+export const EMBEDDING_OUTPUT_FILE = "./embeddings.json";
+
+export const YAML_FRONTMATTER_READ_KEY = "read";
+
+//──────────────────────────────────────────────────────────────────────────────
+// MODELS
 export const EMBEDDING_MODELS = {
 	"text-embedding-3-small": {
 		name: "text-embedding-3-small",
@@ -26,6 +35,3 @@ export const EMBEDDING_MODELS = {
 };
 
 export const MODEL_TO_USE = "text-embedding-3-small";
-export const DATA_FOLDER = "/Users/chrisgrieser/Vaults/phd-data-analysis/Data/_ inbox";
-
-export const EMBEDDING_STORAGE_FILE = "./embeddings.json"
