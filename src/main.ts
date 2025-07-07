@@ -32,7 +32,10 @@ async function requestEmbeddingForFile(
 	// DOCS https://platform.openai.com/docs/guides/embeddings
 	const response = await fetch("https://api.openai.com/v1/embeddings", {
 		method: "POST",
-		headers: { authorization: "Bearer " + OPENAI_API_KEY, "Content-Type": "application/json" },
+		headers: {
+			authorization: "Bearer " + OPENAI_API_KEY,
+			"Content-Type": "application/json",
+		},
 		body: JSON.stringify({ input: fileContent.slice(0, maxLength), model: model.name }),
 	});
 	if (!response.ok) {
