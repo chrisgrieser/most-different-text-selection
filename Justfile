@@ -6,6 +6,12 @@ set quiet := true
 build-and-run:
     node .esbuild.mjs && node main.js
 
+[macos]
+open-input-folder:
+    #!/usr/bin/env zsh
+    input_folder=$(node --eval "console.log(require('./src/settings.ts').INPUT_FOLDER)")
+    open "$input_folder"
+
 check-all:
     git hook run pre-commit -- "check-all"
 
