@@ -4,9 +4,11 @@ corpus.
 
 ## To-do
 - [x] Calculate semantic center (= element-wise average of embedding vectors)
-- [ ] Determine "most simila" and "most different" document based on semantic
+- [ ] Determine "most similar" and "most different" document based on semantic
 center of read documents.
 - [ ] Create test data set.
+- [ ] docs: add a "how it works" section and also describe the purpose / use case
+- [ ] Add to my publication list (CV, Website, mail signature)
 
 ## Usage
 1. Get an OpenAI API key.
