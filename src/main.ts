@@ -14,9 +14,22 @@ import {
 
 //──────────────────────────────────────────────────────────────────────────────
 
+type EmbeddingInfo = {
+	embedding: number[];
+	docAlreadyRead: boolean;
+	relPath: string;
+};
+
+//──────────────────────────────────────────────────────────────────────────────
+
 async function requestEmbeddingForFile(
 	filepath: string,
-): Promise<{ embedding?: number[]; cost?: number; read?: boolean }> {
+): Promise<{ embedding?: number[]; cost?: number; docAlreadyRead?: boolean }> {
+	if (!OPENAI_API_KEY) {
+		console.error("Please set your OpenAI API key in the settings.ts file.");
+		process.exit(1);
+	}
+
 	const model = EMBEDDING_MODELS[MODEL_TO_USE];
 
 	const fileRaw = await readFile(filepath, "utf-8");
@@ -46,18 +59,15 @@ async function requestEmbeddingForFile(
 	const data = await response.json();
 	const embedding = data.data[0].embedding;
 	const cost = data.usage.total_tokens * model.costPerToken;
-	return { embedding: embedding, cost: cost, read: fileWasRead };
+	return { embedding: embedding, cost: cost, docAlreadyRead: fileWasRead };
 }
 
-//──────────────────────────────────────────────────────────────────────────────
-
-async function run() {
-	if (!OPENAI_API_KEY) {
-		console.error("Please set your OpenAI API key in the plugin settings.");
-		process.exit(1);
-	}
-
-	const files = (await readdir(DATA_FOLDER, { recursive: true })).filter(
+/** Also displays a cli progress bar while running */
+async function getEmeddingsForAllFilesInFolder(folder: string): Promise<{
+	embeddingsForAllFiles: EmbeddingInfo[];
+	totalCost: number;
+}> {
+	const files = (await readdir(folder, { recursive: true })).filter(
 		(file) => file.endsWith(".md") || file.endsWith(".txt"),
 	);
 
@@ -65,23 +75,34 @@ async function run() {
 	bar.start(files.length, 0);
 
 	let totalCost = 0;
-	const embeddingsForAllFiles: { embedding: number[]; read: boolean; relPath: string }[] = [];
+	const embeddingsForAllFiles: EmbeddingInfo[] = [];
 	for (const file of files) {
 		const absPath = DATA_FOLDER + "/" + file;
-		const { cost, embedding, read } = await requestEmbeddingForFile(absPath);
+		const { cost, embedding, docAlreadyRead } = await requestEmbeddingForFile(absPath);
 		if (cost) totalCost += cost;
 		if (!embedding) continue;
-		embeddingsForAllFiles.push({ embedding: embedding, read: read || false, relPath: file });
+		embeddingsForAllFiles.push({
+			embedding: embedding,
+			docAlreadyRead: docAlreadyRead || false,
+			relPath: file,
+		});
 		bar.increment();
 	}
 
 	bar.stop();
+	return { embeddingsForAllFiles, totalCost };
+}
+
+//──────────────────────────────────────────────────────────────────────────────
+
+async function run() {
+	const { embeddingsForAllFiles, totalCost } = await getEmeddingsForAllFilesInFolder(DATA_FOLDER);
 
 	const model = EMBEDDING_MODELS[MODEL_TO_USE];
 	const data = {
 		embeddings: embeddingsForAllFiles,
 		info: {
-			location: DATA_FOLDER,
+			inputFolder: DATA_FOLDER,
 			provider: model.provider,
 			model: model.name,
 			totalCostDollar: totalCost.toFixed(5),
