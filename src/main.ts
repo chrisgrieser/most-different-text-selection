@@ -35,7 +35,7 @@ async function requestEmbeddingForFile(
 	const fileRaw = await readFile(filepath, "utf-8");
 	const [frontmatter, fileContent] = fileRaw.match(/^---\n(.*?)\n---\n(.*)/s) || ["", fileRaw];
 	const maxLength = model.maxInputTokens * 4; // rule of thumb: 1 token ~= 4 English chars
-	const fileWasRead =
+	const docAlreadyRead =
 		frontmatter
 			.split("\n")
 			.find((line) => line.startsWith(YAML_FRONTMATTER_READ_KEY + ":"))
@@ -49,7 +49,10 @@ async function requestEmbeddingForFile(
 			authorization: "Bearer " + OPENAI_API_KEY,
 			"Content-Type": "application/json",
 		},
-		body: JSON.stringify({ input: fileContent.slice(0, maxLength), model: model.name }),
+		body: JSON.stringify({
+			input: fileContent.slice(0, maxLength),
+			model: model.name,
+		}),
 	});
 	if (!response.ok) {
 		console.error(`OpenAI error: ${response.status} ${await response.text()}`);
@@ -59,7 +62,7 @@ async function requestEmbeddingForFile(
 	const data = await response.json();
 	const embedding = data.data[0].embedding;
 	const cost = data.usage.total_tokens * model.costPerToken;
-	return { embedding: embedding, cost: cost, docAlreadyRead: fileWasRead };
+	return { embedding, cost, docAlreadyRead };
 }
 
 /** Also displays a cli progress bar while running */
