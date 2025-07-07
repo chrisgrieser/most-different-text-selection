@@ -3,7 +3,7 @@ Use embedding data from LLMs to determine the most different text in a given
 corpus.
 
 ## To-do
-- [ ] Calculate semantic center (= element-wise average of embedding vectors)
+- [x] Calculate semantic center (= element-wise average of embedding vectors)
 - [ ] Determine "most simila" and "most different" document based on semantic
 center of read documents.
 - [ ] Create test data set.

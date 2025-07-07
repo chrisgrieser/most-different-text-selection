@@ -4,9 +4,9 @@ import { readdir, readFile } from "node:fs/promises";
 // @ts-expect-error due to missing types
 import cliProgress from "cli-progress";
 import {
-	DATA_FOLDER,
 	EMBEDDING_MODELS,
 	EMBEDDING_OUTPUT_FILE,
+	INPUT_FOLDER,
 	MODEL_TO_USE,
 	OPENAI_API_KEY,
 	YAML_FRONTMATTER_READ_KEY,
@@ -74,13 +74,14 @@ async function getEmeddingsForAllFilesInFolder(folder: string): Promise<{
 		(file) => file.endsWith(".md") || file.endsWith(".txt"),
 	);
 
+	console.log(`1. Request embeddings from ${EMBEDDING_MODELS[MODEL_TO_USE].name}…`);
 	const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
 	bar.start(files.length, 0);
 
 	let totalCost = 0;
 	const embeddingsForAllFiles: EmbeddingInfo[] = [];
 	for (const file of files) {
-		const absPath = DATA_FOLDER + "/" + file;
+		const absPath = INPUT_FOLDER + "/" + file;
 		const { cost, embedding, docAlreadyRead } = await requestEmbeddingForFile(absPath);
 		if (cost) totalCost += cost;
 		if (!embedding) continue;
@@ -93,19 +94,57 @@ async function getEmeddingsForAllFilesInFolder(folder: string): Promise<{
 	}
 
 	bar.stop();
+	console.log("");
 	return { embeddingsForAllFiles, totalCost };
+}
+
+function elemwiseAvgVector(vectors: number[][]): number[] {
+	if (vectors.length === 0) return [];
+	const dimensions = vectors[0].length;
+
+	console.log("2. Calculating semantic center of read documents…");
+	const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
+	bar.start(vectors.length, 0);
+
+	const avg = new Array(dimensions).fill(0);
+
+	for (const vec of vectors) {
+		for (let d = 0; d < dimensions; d++) {
+			avg[d] += vec[d];
+		}
+		bar.increment();
+	}
+
+	const avgVec = avg.map((val) => val / vectors.length);
+	bar.stop();
+	return avgVec;
 }
 
 //──────────────────────────────────────────────────────────────────────────────
 
-async function run() {
-	const { embeddingsForAllFiles, totalCost } = await getEmeddingsForAllFilesInFolder(DATA_FOLDER);
+async function main() {
+	const { embeddingsForAllFiles, totalCost } = await getEmeddingsForAllFilesInFolder(INPUT_FOLDER);
 
+	// calculate semantic center of read docs
+	const readDocsEmbeddings = embeddingsForAllFiles
+		.filter((e) => e.docAlreadyRead)
+		.map((e) => e.embedding);
+	if (readDocsEmbeddings.length === 0) {
+		console.error("None of the input documents were read.");
+		process.exit(1);
+	}
+	const semanticCenterOfReadDocs = elemwiseAvgVector(readDocsEmbeddings);
+
+	// unread docs
+	const unreadDocs = embeddingsForAllFiles.filter((e) => !e.docAlreadyRead);
+
+	// write to file
 	const model = EMBEDDING_MODELS[MODEL_TO_USE];
 	const data = {
-		embeddings: embeddingsForAllFiles,
+		semanticCenterOfReadDocs: semanticCenterOfReadDocs,
+		unreadDocs: unreadDocs,
 		info: {
-			inputFolder: DATA_FOLDER,
+			inputFolder: INPUT_FOLDER,
 			provider: model.provider,
 			model: model.name,
 			totalCostDollar: totalCost.toFixed(5),
@@ -114,7 +153,8 @@ async function run() {
 	};
 	writeFileSync(EMBEDDING_OUTPUT_FILE, JSON.stringify(data, null, 2));
 
-	// reveal file if on macOS
+	// finish
+	console.log("Done.")
 	if (process.platform === "darwin") exec(`open -R '${EMBEDDING_OUTPUT_FILE}'`);
 }
-run();
+main();
