@@ -1,5 +1,5 @@
 {
-	"name": "Most different text selection",
+	"name": "Most Different Text Selector",
 	"description": "Use embedding data from LLMs to determine the most different text in a given corpus.",
 	"author": "Christopher Grieser",
 	"version": "0.1",
@@ -7,7 +7,9 @@
 		"qualitative data analysis",
 		"llm",
 		"corpus data",
-		"data selection"
+		"linguistic analysis",
+		"data selection",
+		"document analysis"
 	],
 	"license": "MIT",
 	"main": "main.js",

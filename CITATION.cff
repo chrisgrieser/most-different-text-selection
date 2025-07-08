@@ -4,7 +4,7 @@
 #───────────────────────────────────────────────────────────────────────────────
 
 message: If you use this software, please cite it using these metadata.
-title: Most different text selection
+title: Most Different Text Selector
 abstract: Use embedding data from LLMs to determine the most different text in a given corpus.
 type: software
 authors:
@@ -12,12 +12,14 @@ authors:
     given-names: Christopher
     orcid: "https://orcid.org/0000-0002-0767-9496"
 version: 0.1.0
-date-released: 2025-06-31
+date-released: 2025-07-10
 repository-code: https://github.com/chrisgrieser/most-different-text-selection
 keywords:
   - qualitative data analysis
   - llm
   - corpus data
+  - linguistic analysis
   - data selection
+  - document analysis
 cff-version: 1.2.0
 license: MIT
