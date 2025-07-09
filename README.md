@@ -59,15 +59,23 @@ texts. `Most Different Text Selector` works as follows:
    API](https://platform.openai.com/docs/guides/embeddings).
 4. The semantic center of all *read* documents is determined, by calculating the
    element-wise average vector of all embeddings of those documents.
-5. For each *unread* document, the cosine similarity to the semantic center of
-   read documents is calculated.
-6. The document with the highest cosine similarity is then the "most
-   different" document to be read next.
+5. For each *unread* document, the distance (cosine similarity) to the semantic
+   center of read documents is calculated.
+6. The unread documents will be ranked by the shortest distance, that is a being
+   the most dissimilar.
+
+`Most Different Text Selector` is written in TypeScript instead of Python,
+to make potential future implementation as [Obsidian](http://obsidian.md)
+plugin possible, e.g., to complement qualitative analysis with
+[Quadro](https://github.com/chrisgrieser/obsidian-quadro).
 
 ## Usage
 **Requirements**
 - [OpenAI API key](https://platform.openai.com/api-keys)
 - [node.js](https://nodejs.org/en/download)
+- Documents saved as Markdown files in a folder.
+- `read` boolean key in the YAML frontmatter indicating whether the document was
+  read or unread.
 
 1. Modify values in `src/settings.ts`.
 2. Run in the Terminal:
@@ -79,6 +87,10 @@ texts. `Most Different Text Selector` works as follows:
    ```
 
 3. Intermediary output is saved in the file `./embeddings.json`.
+4. The ranking of the "most differentness" is saved in the YAML frontmatter of
+   the unread documents.
+
+## Constraints
 
 > [!NOTE]
 > There is a rate limit for OpenAI embeddings of 100 requests per day with the

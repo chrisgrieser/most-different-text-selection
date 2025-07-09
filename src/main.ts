@@ -1,7 +1,7 @@
 import { exec } from "node:child_process";
 import { writeFileSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
-// @ts-expect-error due to missing types
+import process from "node:process";
 import cliProgress from "cli-progress";
 import {
 	EMBEDDING_MODELS,
@@ -10,7 +10,7 @@ import {
 	MODEL_TO_USE,
 	OPENAI_API_KEY,
 	YAML_FRONTMATTER_READ_KEY,
-} from "./settings";
+} from "src/settings";
 
 //──────────────────────────────────────────────────────────────────────────────
 
@@ -24,7 +24,7 @@ type EmbeddingInfo = {
 
 async function requestEmbeddingForFile(
 	filepath: string,
-): Promise<{ embedding?: number[]; cost?: number; docAlreadyRead?: boolean }> {
+): Promise<{ embedding: number[]; cost: number; docAlreadyRead: boolean } | undefined> {
 	if (!OPENAI_API_KEY) {
 		console.error("Please set your OpenAI API key in the settings.ts file.");
 		process.exit(1);
@@ -34,7 +34,8 @@ async function requestEmbeddingForFile(
 
 	const fileRaw = await readFile(filepath, "utf-8");
 	const [frontmatter, fileContent] = fileRaw.match(/^---\n(.*?)\n---\n(.*)/s) || ["", fileRaw];
-	const maxLength = model.maxInputTokens * 4; // rule of thumb: 1 token ~= 4 English chars
+	const tokensPerChar = 4; // rule of thumb: 1 token ~= 4 English chars
+	const maxLength = model.maxInputTokens * tokensPerChar;
 	const docAlreadyRead =
 		frontmatter
 			.split("\n")
@@ -56,7 +57,7 @@ async function requestEmbeddingForFile(
 	});
 	if (!response.ok) {
 		console.error(`OpenAI error: ${response.status} ${await response.text()}`);
-		return {};
+		return;
 	}
 
 	const data = await response.json();
@@ -74,7 +75,7 @@ async function getEmeddingsForAllFilesInFolder(folder: string): Promise<{
 		(file) => file.endsWith(".md") || file.endsWith(".txt"),
 	);
 
-	console.log(`1. Request embeddings from ${EMBEDDING_MODELS[MODEL_TO_USE].name}…`);
+	console.info(`1. Request embeddings from ${EMBEDDING_MODELS[MODEL_TO_USE].name}…`);
 	const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
 	bar.start(files.length, 0);
 
@@ -82,19 +83,19 @@ async function getEmeddingsForAllFilesInFolder(folder: string): Promise<{
 	const embeddingsForAllFiles: EmbeddingInfo[] = [];
 	for (const file of files) {
 		const absPath = INPUT_FOLDER + "/" + file;
-		const { cost, embedding, docAlreadyRead } = await requestEmbeddingForFile(absPath);
+		const { cost, embedding, docAlreadyRead } = (await requestEmbeddingForFile(absPath)) || {};
 		if (cost) totalCost += cost;
-		if (!embedding) continue;
+		if (!embedding || !docAlreadyRead) continue;
 		embeddingsForAllFiles.push({
 			embedding: embedding,
-			docAlreadyRead: docAlreadyRead || false,
+			docAlreadyRead: docAlreadyRead,
 			relPath: file,
 		});
 		bar.increment();
 	}
 
 	bar.stop();
-	console.log("");
+	console.info("");
 	return { embeddingsForAllFiles, totalCost };
 }
 
@@ -102,7 +103,7 @@ function elemwiseAvgVector(vectors: number[][]): number[] {
 	if (vectors.length === 0) return [];
 	const dimensions = vectors[0].length;
 
-	console.log("2. Calculating semantic center of read documents…");
+	console.info("2. Calculating semantic center of read documents…");
 	const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
 	bar.start(vectors.length, 0);
 
@@ -154,7 +155,9 @@ async function main() {
 	writeFileSync(EMBEDDING_OUTPUT_FILE, JSON.stringify(data, null, 2));
 
 	// finish
-	console.log("Done.")
+	console.info("Done.");
 	if (process.platform === "darwin") exec(`open -R '${EMBEDDING_OUTPUT_FILE}'`);
 }
-main();
+
+//──────────────────────────────────────────────────────────────────────────────
+await main();
