@@ -11,14 +11,20 @@ documents.
 
 <!-- toc -->
 
-- [Scientific use case](#scientific-use-case)
+- [Use case](#use-case)
+	* [Scientific use case](#scientific-use-case)
+	* [Non-scientific use cases](#non-scientific-use-cases)
 - [How it works](#how-it-works)
 - [Usage](#usage)
+- [Constraints](#constraints)
+- [Privacy](#privacy)
 - [Further readings](#further-readings)
 
 <!-- tocstop -->
 
-## Scientific use case
+## Use case
+
+### Scientific use case
 1. When working with a corpus of texts, for instance in linguistics or
    qualitative social research, the order in which those texts are analyzed is
    essential. In qualitative social research, a common case selection strategy
@@ -42,6 +48,23 @@ dissimilar to the set of *already* read documents.
 The `Most Different Text Selector` implements this via embeddings, the
 mathematical vectors underlying LLMs.
 
+The results are of course not perfect, but dependent on the model provided by
+OpenAI. In addition, there is a certain opaqueness to the results, since the
+interpretation of the ~1000 embeddings dimensions is not clear. However, a
+perfect identification of "most differentness," however it may look, is not
+needed: For the purpose of an efficient selection of the next document, the
+*baseline for comparison is the random selection of the next text*. And as
+imperfect as the embedding-based approach may be, it is certainly far better
+than randomly choosing the next document.
+
+### Non-scientific use cases
+Even though `Most Different Text Selector` was designed with the above
+scientific use case in mind, the general idea can also be applied elsewhere:
+- Read later apps suggesting which article to read next.
+- Legal work with a large amount of documents in the discovery phase.
+- Recommendation systems geared toward novelty instead of similarity. ("similar
+to what you liked" vs "Want to try something new?")
+
 ## How it works
 Embeddings have been used to [calculate the similarity of
 texts](https://simonwillison.net/2023/Oct/23/embeddings/#related-content-using-embeddings),
@@ -62,11 +85,13 @@ texts. `Most Different Text Selector` works as follows:
 5. For each *unread* document, the distance (cosine similarity) to the semantic
    center of read documents is calculated.
 6. The unread documents will be ranked by the shortest distance, that is a being
-   the most dissimilar.
+   the most dissimilar. For simplicity for non-technical users, that ranking is
+   translated into a `novelty-score` which is saved in the YAML frontmatter of
+   the unread documents.
 
-`Most Different Text Selector` is written in TypeScript instead of Python,
-to make potential future implementation as [Obsidian](http://obsidian.md)
-plugin possible, e.g., to complement qualitative analysis with
+`Most Different Text Selector` is written in TypeScript instead of Python, to
+make potential future implementation as [Obsidian](http://obsidian.md) plugin
+possible, e.g., to complement qualitative analysis with
 [Quadro](https://github.com/chrisgrieser/obsidian-quadro).
 
 ## Usage
@@ -88,21 +113,33 @@ plugin possible, e.g., to complement qualitative analysis with
 
 3. Intermediary output is saved in the file `./embeddings.json`.
 4. The ranking of the "most differentness" is saved in the YAML frontmatter of
-   the unread documents.
+   the unread documents under the key `novelty-score`.
+
+> [!TIP] Shift of semantic center
+> After reading a sufficient number of documents, the semantic center of read
+> documents will shift, resulting in outdated novelty scores for the unread
+> documents. It is thus recommended to re-run the analysis once in a while.
 
 ## Constraints
+**Number of documents**  
+There is a rate limit for OpenAI embeddings of 100 requests per day with the
+`text-embedding-3-small` in the free tier. If you already paid for your OpenAI
+account in the past, you are automatically placed in a higher tier, with much
+more requests per day.
+- [Info on the placement in tiers](https://platform.openai.com/docs/guides/rate-limits/usage-tiers)
+- [Rate Limit for the model](https://platform.openai.com/docs/models/text-embedding-3-small)
+- [Usage limits info](https://platform.openai.com/settings/organization/limits)
+(your usage tier is noted at the top of the page)
 
-> [!NOTE]
-> There is a rate limit for OpenAI embeddings of 100 requests per day with the
-> `text-embedding-3-small` in the free tier. If you already paid for your OpenAI
-> account in the past, you are automatically placed in a higher tier, with much
-> more requests per day.
->
-> - [Info on the placement in tiers](https://platform.openai.com/docs/guides/rate-limits/usage-tiers)
-> - [Rate Limit for the model](https://platform.openai.com/docs/models/text-embedding-3-small)
-> - [Usage limits
->   info](https://platform.openai.com/settings/organization/limits) (your usage
->   tier is noted at the top of the page)
+**Document size**  
+The current OpenAI models for embeddings have a [maximum input size of 8192
+tokens,](https://github.com/chrisgrieser/most-different-text-selection) which
+are about 32,000 characters of English text. Documents longer than that will be
+automatically truncated by `Most Different Text Selector`.
+
+## Privacy
+All input documents are sent to OpenAI, so be sure to not include sensitive data
+in the input folder.
 
 ## Further readings
 - [Intro to embeddings](https://openai.com/index/introducing-text-and-code-embeddings/)

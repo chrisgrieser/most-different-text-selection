@@ -15,6 +15,9 @@ export const EMBEDDING_OUTPUT_FILE = "./embeddings.json";
 
 export const YAML_FRONTMATTER_READ_KEY = "read";
 
+// TODO
+// export const YAML_FRONTMATTER_MOST_DIFFERENT_KEY = "novelty-score";
+
 //──────────────────────────────────────────────────────────────────────────────
 // MODELS
 export const EMBEDDING_MODELS = {
