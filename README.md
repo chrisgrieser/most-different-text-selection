@@ -19,6 +19,9 @@ documents.
 - [Constraints](#constraints)
 - [Privacy](#privacy)
 - [Further readings](#further-readings)
+- [Credits](#credits)
+	* [Recommended citation](#recommended-citation)
+	* [About the developer](#about-the-developer)
 
 <!-- tocstop -->
 
@@ -115,7 +118,8 @@ possible, e.g., to complement qualitative analysis with
 4. The ranking of the "most differentness" is saved in the YAML frontmatter of
    the unread documents under the key `novelty-score`.
 
-> [!TIP] Shift of semantic center
+> [!TIP]
+> **Shift of semantic center**
 > After reading a sufficient number of documents, the semantic center of read
 > documents will shift, resulting in outdated novelty scores for the unread
 > documents. It is thus recommended to re-run the analysis once in a while.
@@ -144,3 +148,24 @@ in the input folder.
 ## Further readings
 - [Intro to embeddings](https://openai.com/index/introducing-text-and-code-embeddings/)
 - [Using embeddings to calculate related articles](https://technicalwriting.dev/ml/embeddings/overview.html#body)
+
+## Credits
+
+### Recommended citation
+Please cite this software project as (APA):
+
+```txt
+Grieser, C. (2025). Most Different Text Selector [Computer software]. 
+https://github.com/chrisgrieser/most-different-text-selection
+```
+
+### About the developer
+In my day job, I am a sociologist studying the social mechanisms underlying the
+digital economy. For my PhD project, I investigate the governance of the app
+economy and how software ecosystems manage the tension between innovation and
+compatibility. If you are interested in this subject, feel free to get in touch.
+
+- [Website](https://chris-grieser.de/)
+- [Mastodon](https://pkm.social/@pseudometa)
+- [ResearchGate](https://www.researchgate.net/profile/Christopher-Grieser)
+- [LinkedIn](https://www.linkedin.com/in/christopher-grieser-ba693b17a/)
