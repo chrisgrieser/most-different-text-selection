@@ -1,7 +1,6 @@
 import { exec } from "node:child_process";
 import { writeFileSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
-import process from "node:process";
 import cliProgress from "cli-progress";
 import {
 	EMBEDDING_MODELS,
@@ -72,7 +71,8 @@ async function getEmeddingsForAllFilesInFolder(folder: string): Promise<{
 		(file) => file.endsWith(".md") || file.endsWith(".txt"),
 	);
 
-	console.info(`1. Request embeddings from \`${EMBEDDING_MODELS[MODEL_TO_USE].name}\`…`);
+	const model = EMBEDDING_MODELS[MODEL_TO_USE];
+	console.info(`Request embeddings from ${model.provider} (${model.name})…`);
 	const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
 	bar.start(files.length, 0);
 
@@ -98,7 +98,7 @@ function elemwiseAvgVector(vectors: number[][]): number[] {
 	if (vectors.length === 0) return [];
 	const dimensions = vectors[0].length;
 
-	console.info("\n2. Calculating semantic center of read documents…");
+	console.info("\nCalculating elementwise average vector…");
 	const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
 	bar.start(vectors.length, 0);
 
@@ -116,7 +116,7 @@ function elemwiseAvgVector(vectors: number[][]): number[] {
 	return avgVec;
 }
 
-function calculateAllDistances(
+function calculateAllCosineDistances(
 	docs: EmbeddingInfo[],
 	toVector: number[],
 ): { [relPath: string]: number } {
@@ -129,10 +129,18 @@ function calculateAllDistances(
 		return dotProduct / (normA * normB);
 	}
 
-	return docs.reduce((acc: { [relPath: string]: number }, doc) => {
-		acc[doc.relPath] = cosineSimilarity(doc.embedding, toVector);
-		return acc;
-	}, {});
+	console.info("\nCalculating cosine distances…");
+	const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
+	bar.start(docs.length, 0);
+
+	const distances: { [relPath: string]: number } = {};
+	for (const doc of docs) {
+		distances[doc.relPath] = cosineSimilarity(doc.embedding, toVector);
+		bar.increment();
+	}
+
+	bar.stop();
+	return distances;
 }
 
 //──────────────────────────────────────────────────────────────────────────────
@@ -144,15 +152,12 @@ async function main() {
 	const readDocsEmbeddings = embeddingsForAllFiles
 		.filter((doc) => doc.alreadyRead)
 		.map((doc) => doc.embedding);
-	if (readDocsEmbeddings.length === 0) {
-		console.error("None of the input documents were read.");
-		process.exit(1);
-	}
+	if (readDocsEmbeddings.length === 0) throw new Error("None of the input documents were read.");
 	const semanticCenterOfReadDocs = elemwiseAvgVector(readDocsEmbeddings);
 
 	// calculate distance of unread docs to semantic center
 	const unreadDocs = embeddingsForAllFiles.filter((doc) => !doc.alreadyRead);
-	const distances = calculateAllDistances(unreadDocs, semanticCenterOfReadDocs);
+	const distances = calculateAllCosineDistances(unreadDocs, semanticCenterOfReadDocs);
 
 	// write to file
 	const model = EMBEDDING_MODELS[MODEL_TO_USE];
