@@ -116,13 +116,23 @@ function elemwiseAvgVector(vectors: number[][]): number[] {
 	return avgVec;
 }
 
-function cosineSimilarity(a: number[], b: number[]): number {
-	console.assert(a.length === b.length, "Vectors must have the same length");
-	const dotProduct = a.reduce((sum, val, i) => sum + val * b[i], 0);
-	const normA = Math.sqrt(a.reduce((sum, val) => sum + val * val, 0));
-	const normB = Math.sqrt(b.reduce((sum, val) => sum + val * val, 0));
-	console.assert(normA !== 0 && normB !== 0, "Cannot use zero vector");
-	return dotProduct / (normA * normB);
+function calculateAllDistances(
+	docs: EmbeddingInfo[],
+	toVector: number[],
+): { [relPath: string]: number } {
+	function cosineSimilarity(a: number[], b: number[]): number {
+		console.assert(a.length === b.length, "Vectors must have the same length");
+		const dotProduct = a.reduce((sum, val, i) => sum + val * b[i], 0);
+		const normA = Math.sqrt(a.reduce((sum, val) => sum + val * val, 0));
+		const normB = Math.sqrt(b.reduce((sum, val) => sum + val * val, 0));
+		console.assert(normA !== 0 && normB !== 0, "Cannot use zero vector");
+		return dotProduct / (normA * normB);
+	}
+
+	return docs.reduce((acc: { [relPath: string]: number }, doc) => {
+		acc[doc.relPath] = cosineSimilarity(doc.embedding, toVector);
+		return acc;
+	}, {});
 }
 
 //──────────────────────────────────────────────────────────────────────────────
@@ -132,27 +142,22 @@ async function main() {
 
 	// calculate semantic center of read docs
 	const readDocsEmbeddings = embeddingsForAllFiles
-		.filter((e) => e.alreadyRead)
-		.map((e) => e.embedding);
+		.filter((doc) => doc.alreadyRead)
+		.map((doc) => doc.embedding);
 	if (readDocsEmbeddings.length === 0) {
 		console.error("None of the input documents were read.");
 		process.exit(1);
 	}
 	const semanticCenterOfReadDocs = elemwiseAvgVector(readDocsEmbeddings);
 
-	// calculate distance of unread docs to semantic center, and sort by it
-	const unreadDocs = embeddingsForAllFiles.reduce((acc: { [relPath: string]: number }, doc) => {
-		if (!doc.alreadyRead) {
-			const distance = cosineSimilarity(doc.embedding, semanticCenterOfReadDocs);
-			acc[doc.relPath] = distance;
-		}
-		return acc;
-	}, {});
+	// calculate distance of unread docs to semantic center
+	const unreadDocs = embeddingsForAllFiles.filter((doc) => !doc.alreadyRead);
+	const distances = calculateAllDistances(unreadDocs, semanticCenterOfReadDocs);
 
 	// write to file
 	const model = EMBEDDING_MODELS[MODEL_TO_USE];
 	const data = {
-		distancesOfUnreadDocsToSemanticCenter: unreadDocs,
+		distancesOfUnreadDocsToSemanticCenter: distances,
 		info: {
 			inputFolder: INPUT_FOLDER,
 			provider: model.provider,
