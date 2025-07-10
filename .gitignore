@@ -4,5 +4,5 @@ node_modules
 # build
 main.js
 
-# cache files
-embeddings.json
+# cache file
+output.json

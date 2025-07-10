@@ -4,10 +4,10 @@ import { readdir, readFile } from "node:fs/promises";
 import cliProgress from "cli-progress";
 import {
 	EMBEDDING_MODELS,
-	EMBEDDING_OUTPUT_FILE,
 	INPUT_FOLDER,
 	MODEL_TO_USE,
 	OPENAI_API_KEY,
+	OUTPUT_FILE,
 	YAML_FRONTMATTER_READ_KEY,
 } from "src/settings";
 
@@ -156,8 +156,8 @@ async function main() {
 	const semanticCenterOfReadDocs = elemwiseAvgVector(readDocsEmbeddings);
 
 	// calculate distance of unread docs to semantic center
-	const unreadDocs = embeddingsForAllFiles.filter((doc) => !doc.alreadyRead);
-	const distances = calculateAllCosineDistances(unreadDocs, semanticCenterOfReadDocs);
+	const unreadDocsEmbeddings = embeddingsForAllFiles.filter((doc) => !doc.alreadyRead);
+	const distances = calculateAllCosineDistances(unreadDocsEmbeddings, semanticCenterOfReadDocs);
 
 	// write to file
 	const model = EMBEDDING_MODELS[MODEL_TO_USE];
@@ -171,11 +171,11 @@ async function main() {
 			creationDate: new Date().toISOString().slice(0, 19).replace("T", " "),
 		},
 	};
-	writeFileSync(EMBEDDING_OUTPUT_FILE, JSON.stringify(data, null, 2));
+	writeFileSync(OUTPUT_FILE, JSON.stringify(data, null, "\t"));
 
 	// finish
 	console.info("\nDone.");
-	if (process.platform === "darwin") exec(`open -R '${EMBEDDING_OUTPUT_FILE}'`);
+	if (process.platform === "darwin") exec(`open -R '${OUTPUT_FILE}'`);
 }
 
 //──────────────────────────────────────────────────────────────────────────────

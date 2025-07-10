@@ -114,7 +114,7 @@ possible, e.g., to complement qualitative analysis with
    node main.js
    ```
 
-3. Intermediary output is saved in the file `./embeddings.json`.
+3. Intermediary output is saved in the file `./output.json`.
 4. The ranking of the "most differentness" is saved in the YAML frontmatter of
    the unread documents under the key `novelty-score`.
 

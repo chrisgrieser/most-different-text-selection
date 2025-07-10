@@ -11,7 +11,7 @@ export const OPENAI_API_KEY = readFileSync(openaiApiKeyFile, "utf8");
 // uses `.md` to `.txt` files in that folder (recursively)
 export const INPUT_FOLDER = "/Users/chrisgrieser/Vaults/phd-data-analysis/Data/_ inbox";
 
-export const EMBEDDING_OUTPUT_FILE = "./embeddings.json";
+export const OUTPUT_FILE = "./output.json";
 
 export const YAML_FRONTMATTER_READ_KEY = "read";
 
