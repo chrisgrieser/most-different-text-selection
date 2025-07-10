@@ -16,7 +16,7 @@ import {
 
 type EmbeddingInfo = {
 	embedding: number[];
-	docAlreadyRead: boolean;
+	alreadyRead: boolean;
 	relPath: string;
 };
 
@@ -24,7 +24,7 @@ type EmbeddingInfo = {
 
 async function requestEmbeddingForFile(
 	filepath: string,
-): Promise<{ embedding: number[]; cost: number; docAlreadyRead: boolean } | undefined> {
+): Promise<{ embedding: number[]; cost: number; docAlreadyRead: boolean }> {
 	if (!OPENAI_API_KEY) {
 		console.error("Please set your OpenAI API key in the settings.ts file.");
 		process.exit(1);
@@ -55,10 +55,7 @@ async function requestEmbeddingForFile(
 			model: model.name,
 		}),
 	});
-	if (!response.ok) {
-		console.error(`OpenAI error: ${response.status} ${await response.text()}`);
-		return;
-	}
+	if (!response.ok) throw new Error(`OpenAI error: ${response.status} ${await response.text()}`);
 
 	const data = await response.json();
 	const embedding = data.data[0].embedding;
@@ -75,7 +72,7 @@ async function getEmeddingsForAllFilesInFolder(folder: string): Promise<{
 		(file) => file.endsWith(".md") || file.endsWith(".txt"),
 	);
 
-	console.info(`1. Request embeddings from ${EMBEDDING_MODELS[MODEL_TO_USE].name}…`);
+	console.info(`1. Request embeddings from \`${EMBEDDING_MODELS[MODEL_TO_USE].name}\`…`);
 	const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
 	bar.start(files.length, 0);
 
@@ -83,19 +80,17 @@ async function getEmeddingsForAllFilesInFolder(folder: string): Promise<{
 	const embeddingsForAllFiles: EmbeddingInfo[] = [];
 	for (const file of files) {
 		const absPath = INPUT_FOLDER + "/" + file;
-		const { cost, embedding, docAlreadyRead } = (await requestEmbeddingForFile(absPath)) || {};
+		const { cost, embedding, docAlreadyRead } = await requestEmbeddingForFile(absPath);
 		if (cost) totalCost += cost;
-		if (!embedding || !docAlreadyRead) continue;
 		embeddingsForAllFiles.push({
 			embedding: embedding,
-			docAlreadyRead: docAlreadyRead,
+			alreadyRead: docAlreadyRead,
 			relPath: file,
 		});
 		bar.increment();
 	}
 
 	bar.stop();
-	console.info("");
 	return { embeddingsForAllFiles, totalCost };
 }
 
@@ -103,7 +98,7 @@ function elemwiseAvgVector(vectors: number[][]): number[] {
 	if (vectors.length === 0) return [];
 	const dimensions = vectors[0].length;
 
-	console.info("2. Calculating semantic center of read documents…");
+	console.info("\n2. Calculating semantic center of read documents…");
 	const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
 	bar.start(vectors.length, 0);
 
@@ -121,6 +116,15 @@ function elemwiseAvgVector(vectors: number[][]): number[] {
 	return avgVec;
 }
 
+function cosineSimilarity(a: number[], b: number[]): number {
+	console.assert(a.length === b.length, "Vectors must have the same length");
+	const dotProduct = a.reduce((sum, val, i) => sum + val * b[i], 0);
+	const normA = Math.sqrt(a.reduce((sum, val) => sum + val * val, 0));
+	const normB = Math.sqrt(b.reduce((sum, val) => sum + val * val, 0));
+	console.assert(normA !== 0 && normB !== 0, "Cannot use zero vector");
+	return dotProduct / (normA * normB);
+}
+
 //──────────────────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -128,7 +132,7 @@ async function main() {
 
 	// calculate semantic center of read docs
 	const readDocsEmbeddings = embeddingsForAllFiles
-		.filter((e) => e.docAlreadyRead)
+		.filter((e) => e.alreadyRead)
 		.map((e) => e.embedding);
 	if (readDocsEmbeddings.length === 0) {
 		console.error("None of the input documents were read.");
@@ -136,14 +140,19 @@ async function main() {
 	}
 	const semanticCenterOfReadDocs = elemwiseAvgVector(readDocsEmbeddings);
 
-	// unread docs
-	const unreadDocs = embeddingsForAllFiles.filter((e) => !e.docAlreadyRead);
+	// calculate distance of unread docs to semantic center, and sort by it
+	const unreadDocs = embeddingsForAllFiles.reduce((acc: { [relPath: string]: number }, doc) => {
+		if (!doc.alreadyRead) {
+			const distance = cosineSimilarity(doc.embedding, semanticCenterOfReadDocs);
+			acc[doc.relPath] = distance;
+		}
+		return acc;
+	}, {});
 
 	// write to file
 	const model = EMBEDDING_MODELS[MODEL_TO_USE];
 	const data = {
-		semanticCenterOfReadDocs: semanticCenterOfReadDocs,
-		unreadDocs: unreadDocs,
+		distancesOfUnreadDocsToSemanticCenter: unreadDocs,
 		info: {
 			inputFolder: INPUT_FOLDER,
 			provider: model.provider,
@@ -155,9 +164,9 @@ async function main() {
 	writeFileSync(EMBEDDING_OUTPUT_FILE, JSON.stringify(data, null, 2));
 
 	// finish
-	console.info("Done.");
+	console.info("\nDone.");
 	if (process.platform === "darwin") exec(`open -R '${EMBEDDING_OUTPUT_FILE}'`);
 }
 
 //──────────────────────────────────────────────────────────────────────────────
-await main();
+main();

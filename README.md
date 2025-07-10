@@ -3,9 +3,9 @@ Use embedding data from LLMs to determine the "most different" document
 in relation to a set of documents.
 
 ## To-do
-- [ ] Determine most different unread document based on semantic center of read
-documents.
 - [ ] Create test data set.
+- [ ] Write distance as novelty score back into YAML frontmatter of unread
+documents.
 
 ## Table of contents
 
