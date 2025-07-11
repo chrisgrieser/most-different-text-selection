@@ -35,13 +35,14 @@ documents.
    the ones already analyzed. However, this can be challenging, as the
    identification of which document is "most different" in itself is often not
    obvious.
-2. Another issue arises when the data corpus is so large, that not all documents
-   can be analyzed. In that case, a common strategy is to stop the data analysis
-   once *theoretical saturation* is reached, that is the point where analyzing
-   additional documents does not yield new insights. However, an intrinsic
-   danger of this approach is overlooking documents that contain relevant
-   information, simply because in the sequential analysis of documents, the
-   researcher coincidentally only selected documents with similar information.
+2. Another issue arises when the<!-- harper: ignore --> data corpus is so large,
+   that not all documents can be analyzed. In that case, a common strategy is to
+   stop the data analysis once *theoretical saturation* is reached, that is the
+   point where analyzing additional documents does not yield new insights.
+   However, an intrinsic danger of this approach is overlooking documents that
+   contain relevant information, simply because in the sequential analysis of
+   documents, the researcher coincidentally only selected documents with similar
+   information.
 
 In both of these scenarios, an automatic identification documents "most
 different" in relation to a given set of documents becomes relevant.
@@ -93,7 +94,7 @@ texts. `Most Different Text Selector` works as follows:
    the unread documents.
 
 `Most Different Text Selector` is written in TypeScript instead of Python, to
-make potential future implementation as [Obsidian](http://obsidian.md) plugin
+make potential future implementation as plugin for [Obsidian](http://obsidian.md)
 possible, e.g., to complement qualitative analysis with
 [Quadro](https://github.com/chrisgrieser/obsidian-quadro).
 
