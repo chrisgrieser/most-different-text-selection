@@ -159,10 +159,16 @@ async function main() {
 	const unreadDocsEmbeddings = embeddingsForAllFiles.filter((doc) => !doc.alreadyRead);
 	const distances = calculateAllCosineDistances(unreadDocsEmbeddings, semanticCenterOfReadDocs);
 
+	// normalize distances to 0-100 (with 1 decimal) for readability
+	const noveltyScores: { [relPath: string]: number } = {};
+	for (const [relPath, dist] of Object.entries(distances)) {
+		noveltyScores[relPath] = Number((dist * 100).toFixed(1));
+	}
+
 	// write to file
 	const model = EMBEDDING_MODELS[MODEL_TO_USE];
 	const data = {
-		distancesOfUnreadDocsToSemanticCenter: distances,
+		noveltyScores: noveltyScores,
 		info: {
 			inputFolder: INPUT_FOLDER,
 			provider: model.provider,
