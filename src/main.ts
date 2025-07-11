@@ -95,31 +95,25 @@ async function getEmbedsForAllFilesInFolder(folder: string): Promise<{
 }
 
 function elemwiseAvgVector(vectors: number[][]): number[] {
+	console.info("Calculating elementwise average vector…");
 	if (vectors.length === 0) return [];
 	const dimensions = vectors[0].length;
 
-	console.info("\nCalculating elementwise average vector…");
-	const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
-	bar.start(vectors.length, 0);
-
 	const avg: number[] = new Array(dimensions).fill(0);
-
 	for (const vec of vectors) {
 		for (let d = 0; d < dimensions; d++) {
 			avg[d] += vec[d];
 		}
-		bar.increment();
 	}
-
-	const avgVec = avg.map((val) => val / vectors.length);
-	bar.stop();
-	return avgVec;
+	return avg.map((val) => val / vectors.length);
 }
 
 function allCosineDistances(
 	docs: EmbeddingInfo[],
 	toVector: number[],
 ): { [relPath: string]: number } {
+	console.info("Calculating cosine distances…");
+
 	function cosineSimilarity(a: number[], b: number[]): number {
 		console.assert(a.length === b.length, "Vectors must have the same length");
 		const dotProduct = a.reduce((sum, val, i) => sum + val * b[i], 0);
@@ -129,17 +123,10 @@ function allCosineDistances(
 		return dotProduct / (normA * normB);
 	}
 
-	console.info("\nCalculating cosine distances…");
-	const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
-	bar.start(docs.length, 0);
-
 	const distances: { [relPath: string]: number } = {};
 	for (const doc of docs) {
 		distances[doc.relPath] = cosineSimilarity(doc.embedding, toVector);
-		bar.increment();
 	}
-
-	bar.stop();
 	return distances;
 }
 
@@ -201,7 +188,7 @@ async function main() {
 	writeFileSync(REPORT_FILE, report.join("\n"));
 
 	// finish
-	console.info("\nDone.");
+	console.info("Done.");
 	if (process.platform === "darwin") exec(`open -R '${REPORT_FILE}'`);
 }
 
