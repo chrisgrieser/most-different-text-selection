@@ -119,7 +119,6 @@ function elemwiseAvgVector(vectors: number[][]): number[] {
 function allCosineDistances(
 	docs: EmbeddingInfo[],
 	toVector: number[],
-	multiplyResultWith = 1, // change result for readability
 ): { [relPath: string]: number } {
 	function cosineSimilarity(a: number[], b: number[]): number {
 		console.assert(a.length === b.length, "Vectors must have the same length");
@@ -136,7 +135,7 @@ function allCosineDistances(
 
 	const distances: { [relPath: string]: number } = {};
 	for (const doc of docs) {
-		distances[doc.relPath] = cosineSimilarity(doc.embedding, toVector) * multiplyResultWith;
+		distances[doc.relPath] = cosineSimilarity(doc.embedding, toVector);
 		bar.increment();
 	}
 
@@ -157,10 +156,16 @@ async function main() {
 
 	// calculate distance of unread docs to semantic center
 	const unreadDocsEmbeds = embedsForAllFiles.filter((doc) => !doc.alreadyRead);
-	const distances = allCosineDistances(unreadDocsEmbeds, centerOfReadDocs, 100);
+	const distances = allCosineDistances(unreadDocsEmbeds, centerOfReadDocs);
+
+	// readability/interpretability: normalize to 0-100 and flip, for easier
+	const noveltyScores: { [relPath: string]: number } = {};
+	for (const [relPath, distance] of Object.entries(distances)) {
+		noveltyScores[relPath] = (1 - distance) * 100;
+	}
 
 	// write report
-	const listOfUnread = Object.entries(distances)
+	const listOfUnread = Object.entries(noveltyScores)
 		.map(([relPath, score]) => ({ relPath, score }))
 		.sort((a, b) => b.score - a.score)
 		.map((doc) => `- [${doc.score.toFixed(1)}] ${doc.relPath.replace(".md", "")}`);
