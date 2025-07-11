@@ -161,6 +161,11 @@ async function main() {
 	// readability/interpretability: normalize to 0-100 and flip, for easier
 	const noveltyScores: { [relPath: string]: number } = {};
 	for (const [relPath, distance] of Object.entries(distances)) {
+		if (distance < 0) {
+			const err =
+				"Expected all distances to be positive (which cosine distances of LLM embeddings usually are).";
+			throw new Error(err);
+		}
 		noveltyScores[relPath] = (1 - distance) * 100;
 	}
 
