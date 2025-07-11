@@ -102,7 +102,7 @@ function elemwiseAvgVector(vectors: number[][]): number[] {
 	const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
 	bar.start(vectors.length, 0);
 
-	const avg = new Array(dimensions).fill(0);
+	const avg: number[] = new Array(dimensions).fill(0);
 
 	for (const vec of vectors) {
 		for (let d = 0; d < dimensions; d++) {
@@ -167,6 +167,10 @@ async function main() {
 
 	// write to file
 	const model = EMBEDDING_MODELS[MODEL_TO_USE];
+	const isoDateLocal = new Date(Date.now() - new Date().getTimezoneOffset() * 60_000)
+		.toISOString()
+		.slice(0, 19)
+		.replace("T", " ");
 	const data = {
 		noveltyScores: noveltyScores,
 		info: {
@@ -174,7 +178,7 @@ async function main() {
 			provider: model.provider,
 			model: model.name,
 			totalCostDollar: totalCost.toFixed(5),
-			creationDate: new Date().toISOString().slice(0, 19).replace("T", " "),
+			creationDate: isoDateLocal,
 		},
 	};
 	writeFileSync(OUTPUT_FILE, JSON.stringify(data, null, "\t"));
