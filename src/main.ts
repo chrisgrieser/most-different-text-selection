@@ -7,7 +7,7 @@ import {
 	INPUT_FOLDER,
 	MODEL_TO_USE,
 	OPENAI_API_KEY,
-	OUTPUT_FILE,
+	REPORT_FILE,
 	YAML_FRONTMATTER_READ_KEY,
 } from "src/settings";
 
@@ -149,9 +149,8 @@ async function main() {
 	const { embeddingsForAllFiles, totalCost } = await getEmeddingsForAllFilesInFolder(INPUT_FOLDER);
 
 	// calculate semantic center of read docs
-	const readDocsEmbeddings = embeddingsForAllFiles
-		.filter((doc) => doc.alreadyRead)
-		.map((doc) => doc.embedding);
+	const readDocs = embeddingsForAllFiles.filter((doc) => doc.alreadyRead);
+	const readDocsEmbeddings = readDocs.map((doc) => doc.embedding);
 	if (readDocsEmbeddings.length === 0) throw new Error("None of the input documents were read.");
 	const semanticCenterOfReadDocs = elemwiseAvgVector(readDocsEmbeddings);
 
@@ -165,29 +164,40 @@ async function main() {
 		noveltyScores[relPath] = Number((dist * 100).toFixed(1));
 	}
 
-	// write to file
+	// write report
+	const listOfUnread = Object.entries(noveltyScores)
+		.map(([relPath, score]) => ({ relPath, score }))
+		.sort((a, b) => b.score - a.score)
+		.map((doc) => `- ${doc.score}%: ${doc.relPath}`);
+	const listOfRead = readDocs.map((doc) => `- ${doc.relPath}`);
 	const model = EMBEDDING_MODELS[MODEL_TO_USE];
 	const isoDateLocal = new Date(Date.now() - new Date().getTimezoneOffset() * 60_000)
 		.toISOString()
 		.slice(0, 19)
 		.replace("T", " ");
-	const data = {
-		noveltyScores: noveltyScores,
-		info: {
-			inputFolder: INPUT_FOLDER,
-			readDocuments: readDocsEmbeddings.length,
-			unreadDocuments: unreadDocsEmbeddings.length,
-			provider: model.provider,
-			model: model.name,
-			totalCostDollar: totalCost.toFixed(5),
-			creationDate: isoDateLocal,
-		},
-	};
-	writeFileSync(OUTPUT_FILE, JSON.stringify(data, null, "\t"));
+
+	const report = [
+		"# Report",
+		"",
+		"## Novelty scores of unread documents",
+		...listOfUnread,
+		"",
+		"## Read documents",
+		...listOfRead,
+		"",
+		"## Metadata",
+		"- inputFolder: " + INPUT_FOLDER,
+		"- readDocuments: " + readDocsEmbeddings.length,
+		"- unreadDocuments: " + unreadDocsEmbeddings.length,
+		`- provider: ${model.name} (${model.provider})`,
+		`- total cost ${totalCost.toFixed(5)}$`,
+		"- creationDate: " + isoDateLocal,
+	];
+	writeFileSync(REPORT_FILE, report.join("\n"));
 
 	// finish
 	console.info("\nDone.");
-	if (process.platform === "darwin") exec(`open -R '${OUTPUT_FILE}'`);
+	if (process.platform === "darwin") exec(`open -R '${REPORT_FILE}'`);
 }
 
 //──────────────────────────────────────────────────────────────────────────────

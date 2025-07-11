@@ -4,5 +4,5 @@ node_modules
 # build
 main.js
 
-# cache file
-output.json
+# temp output
+REPORT.md

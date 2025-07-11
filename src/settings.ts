@@ -11,7 +11,7 @@ export const OPENAI_API_KEY = readFileSync(openaiApiKeyFile, "utf8");
 // uses `.md` files in that folder (recursively)
 export const INPUT_FOLDER = "./test-data/";
 
-export const OUTPUT_FILE = "./output.json";
+export const REPORT_FILE = "./REPORT.md";
 
 export const YAML_FRONTMATTER_READ_KEY = "read";
 
