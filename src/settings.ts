@@ -8,8 +8,8 @@ const openaiApiKeyFile =
 
 export const OPENAI_API_KEY = readFileSync(openaiApiKeyFile, "utf8");
 
-// uses `.md` to `.txt` files in that folder (recursively)
-export const INPUT_FOLDER = "/Users/chrisgrieser/Vaults/phd-data-analysis/Data/_ inbox";
+// uses `.md` files in that folder (recursively)
+export const INPUT_FOLDER = "./test-data/";
 
 export const OUTPUT_FILE = "./output.json";
 

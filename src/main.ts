@@ -67,8 +67,8 @@ async function getEmeddingsForAllFilesInFolder(folder: string): Promise<{
 	embeddingsForAllFiles: EmbeddingInfo[];
 	totalCost: number;
 }> {
-	const files = (await readdir(folder, { recursive: true })).filter(
-		(file) => file.endsWith(".md") || file.endsWith(".txt"),
+	const files = (await readdir(folder, { recursive: true })).filter((file) =>
+		file.endsWith(".md"),
 	);
 
 	const model = EMBEDDING_MODELS[MODEL_TO_USE];
@@ -175,6 +175,8 @@ async function main() {
 		noveltyScores: noveltyScores,
 		info: {
 			inputFolder: INPUT_FOLDER,
+			readDocuments: readDocsEmbeddings.length,
+			unreadDocuments: unreadDocsEmbeddings.length,
 			provider: model.provider,
 			model: model.name,
 			totalCostDollar: totalCost.toFixed(5),
