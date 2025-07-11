@@ -49,14 +49,20 @@ Effectively, it allows the efficient selection of *unread* documents most
 dissimilar to the set of *already* read documents.
 
 The `Most Different Text Selector` implements this via embeddings, the
-mathematical vectors underlying LLMs.
+mathematical vectors underlying LLMs, to calculate a "novelty score" of each
+unread document in relation to the set of read documents.
 
-The results are of course not perfect, but dependent on the model provided by
-OpenAI. In addition, there is a certain opaqueness to the results, since the
-interpretation of the ~1000 embeddings dimensions is not clear. However, a
-perfect identification of "most differentness," however it may look, is not
-needed: For the purpose of an efficient selection of the next document, the
-*baseline for comparison is the random selection of the next text*. And as
+The results are far from objective in any way, but dependent on the
+model used and the training data the commercial providers used. In addition, the
+interpretation of the novelty scores is limited, since 1. the meaning of the
+more than 1000 embeddings is unknown, and 2. the aggregation of all those
+dimensions into a single score conceals which dimensions contributed to the
+score. (If a document is considered "most different," it could be due to the
+topic, genre, or language.)
+
+However, a perfect identification of "most differentness," however it may look,
+is not needed: For the purpose of an efficient selection of the next document,
+the *baseline for comparison is the random selection of the next text*. And as
 imperfect as the embedding-based approach may be, it is certainly far better
 than randomly choosing the next document.
 
