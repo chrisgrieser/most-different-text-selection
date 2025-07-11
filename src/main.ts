@@ -63,8 +63,8 @@ async function requestEmbeddingForFile(
 }
 
 /** Also displays a cli progress bar while running */
-async function getEmeddingsForAllFilesInFolder(folder: string): Promise<{
-	embeddingsForAllFiles: EmbeddingInfo[];
+async function getEmbedsForAllFilesInFolder(folder: string): Promise<{
+	embedsForAllFiles: EmbeddingInfo[];
 	totalCost: number;
 }> {
 	const files = (await readdir(folder, { recursive: true })).filter((file) =>
@@ -91,7 +91,7 @@ async function getEmeddingsForAllFilesInFolder(folder: string): Promise<{
 	}
 
 	bar.stop();
-	return { embeddingsForAllFiles, totalCost };
+	return { embedsForAllFiles: embeddingsForAllFiles, totalCost };
 }
 
 function elemwiseAvgVector(vectors: number[][]): number[] {
@@ -116,9 +116,10 @@ function elemwiseAvgVector(vectors: number[][]): number[] {
 	return avgVec;
 }
 
-function calculateAllCosineDistances(
+function allCosineDistances(
 	docs: EmbeddingInfo[],
 	toVector: number[],
+	multiplyResultWith = 1, // change result for readability
 ): { [relPath: string]: number } {
 	function cosineSimilarity(a: number[], b: number[]): number {
 		console.assert(a.length === b.length, "Vectors must have the same length");
@@ -135,7 +136,7 @@ function calculateAllCosineDistances(
 
 	const distances: { [relPath: string]: number } = {};
 	for (const doc of docs) {
-		distances[doc.relPath] = cosineSimilarity(doc.embedding, toVector);
+		distances[doc.relPath] = cosineSimilarity(doc.embedding, toVector) * multiplyResultWith;
 		bar.increment();
 	}
 
@@ -146,30 +147,24 @@ function calculateAllCosineDistances(
 //──────────────────────────────────────────────────────────────────────────────
 
 async function main() {
-	const { embeddingsForAllFiles, totalCost } = await getEmeddingsForAllFilesInFolder(INPUT_FOLDER);
+	const { embedsForAllFiles, totalCost } = await getEmbedsForAllFilesInFolder(INPUT_FOLDER);
 
 	// calculate semantic center of read docs
-	const readDocs = embeddingsForAllFiles.filter((doc) => doc.alreadyRead);
-	const readDocsEmbeddings = readDocs.map((doc) => doc.embedding);
-	if (readDocsEmbeddings.length === 0) throw new Error("None of the input documents were read.");
-	const semanticCenterOfReadDocs = elemwiseAvgVector(readDocsEmbeddings);
+	const readDocs = embedsForAllFiles.filter((doc) => doc.alreadyRead);
+	const readDocsEmbeds = readDocs.map((doc) => doc.embedding);
+	if (readDocsEmbeds.length === 0) throw new Error("None of the input documents were read.");
+	const centerOfReadDocs = elemwiseAvgVector(readDocsEmbeds);
 
 	// calculate distance of unread docs to semantic center
-	const unreadDocsEmbeddings = embeddingsForAllFiles.filter((doc) => !doc.alreadyRead);
-	const distances = calculateAllCosineDistances(unreadDocsEmbeddings, semanticCenterOfReadDocs);
-
-	// normalize distances to 0-100 (with 1 decimal) for readability
-	const noveltyScores: { [relPath: string]: number } = {};
-	for (const [relPath, dist] of Object.entries(distances)) {
-		noveltyScores[relPath] = Number((dist * 100).toFixed(1));
-	}
+	const unreadDocsEmbeds = embedsForAllFiles.filter((doc) => !doc.alreadyRead);
+	const distances = allCosineDistances(unreadDocsEmbeds, centerOfReadDocs, 100);
 
 	// write report
-	const listOfUnread = Object.entries(noveltyScores)
+	const listOfUnread = Object.entries(distances)
 		.map(([relPath, score]) => ({ relPath, score }))
 		.sort((a, b) => b.score - a.score)
-		.map((doc) => `- ${doc.score}%: ${doc.relPath}`);
-	const listOfRead = readDocs.map((doc) => `- ${doc.relPath}`);
+		.map((doc) => `- [${doc.score.toFixed(1)}] ${doc.relPath.replace(".md", "")}`);
+	const listOfRead = readDocs.map((doc) => "- " + doc.relPath.replace(".md", ""));
 	const model = EMBEDDING_MODELS[MODEL_TO_USE];
 	const isoDateLocal = new Date(Date.now() - new Date().getTimezoneOffset() * 60_000)
 		.toISOString()
@@ -186,12 +181,12 @@ async function main() {
 		...listOfRead,
 		"",
 		"## Metadata",
-		"- inputFolder: " + INPUT_FOLDER,
-		"- readDocuments: " + readDocsEmbeddings.length,
-		"- unreadDocuments: " + unreadDocsEmbeddings.length,
-		`- provider: ${model.name} (${model.provider})`,
-		`- total cost ${totalCost.toFixed(5)}$`,
-		"- creationDate: " + isoDateLocal,
+		`- Input folder: \`${INPUT_FOLDER}\``,
+		"- Read documents: " + readDocsEmbeds.length,
+		"- Unread documents: " + unreadDocsEmbeds.length,
+		`- Provider: ${model.name} (${model.provider})`,
+		"- Total cost: $" + totalCost.toFixed(5), // needs this many digits to display anything
+		"- Creation date: " + isoDateLocal,
 	];
 	writeFileSync(REPORT_FILE, report.join("\n"));
 
