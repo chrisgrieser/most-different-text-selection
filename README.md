@@ -2,9 +2,13 @@
 Use embedding data from LLMs to determine the "most different" document
 in relation to a set of documents.
 
+<img width="70%" src="https://github.com/user-attachments/assets/558afd51-6823-4ce5-a650-20dc666e155e" />
+
 ## To-do
-- [ ] Write distance as novelty score back into YAML frontmatter of unread
-documents.
+- [ ] write novelty score into YAML frontmatter of unread documents
+- [ ] use `file:` md links
+- [ ] Obsidian function for opening based on novelty-score
+- [ ] use `\r` to log progress, avoids cli progress dependency
 
 ## Table of contents
 
@@ -89,14 +93,14 @@ texts. `Most Different Text Selector` works as follows:
    determine whether the file was already read or not.
 3. For each file, the embedding is determined via the [OpenAI
    API](https://platform.openai.com/docs/guides/embeddings).
-4. The semantic center of all *read* documents is determined, by calculating the
+4. The semantic center of all *read* documents is determined by calculating the
    element-wise average vector of all embeddings of those documents.
 5. For each *unread* document, the distance (cosine similarity) to the semantic
    center of read documents is calculated.
-6. The unread documents will be ranked by the shortest distance, that is a being
-   the most dissimilar. For simplicity for non-technical users, that ranking is
-   translated into a `novelty-score` which is saved in the YAML frontmatter of
-   the unread documents.
+6. For easier interpretability, the cosine similarity will be transformed into a
+   "novelty score" that ranges from 0 to 100, with 100 being the most different.
+7. The results are saved to a file called `./REPORT.md`, and written back to the
+   YAML-frontmatter of the *unread* documents.
 
 `Most Different Text Selector` is written in TypeScript instead of Python, to
 make potential future implementation as plugin for [Obsidian](http://obsidian.md)
@@ -154,6 +158,7 @@ in the input folder.
 ## Further readings
 - [Intro to embeddings](https://openai.com/index/introducing-text-and-code-embeddings/)
 - [Using embeddings to calculate related articles](https://technicalwriting.dev/ml/embeddings/overview.html#body)
+- [Benchmark for embeddings](https://arxiv.org/abs/2210.07316)
 
 ## Credits
 
