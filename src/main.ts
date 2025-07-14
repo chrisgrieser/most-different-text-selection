@@ -1,7 +1,6 @@
 import { exec } from "node:child_process";
 import { writeFileSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
-import cliProgress from "cli-progress";
 import {
 	EMBEDDING_MODELS,
 	INPUT_FOLDER,
@@ -73,8 +72,6 @@ async function getEmbedsForAllFilesInFolder(folder: string): Promise<{
 
 	const model = EMBEDDING_MODELS[MODEL_TO_USE];
 	console.info(`Request embeddings from ${model.provider} (${model.name})…`);
-	const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
-	bar.start(files.length, 0);
 
 	let totalCost = 0;
 	const embeddingsForAllFiles: EmbeddingInfo[] = [];
@@ -87,10 +84,10 @@ async function getEmbedsForAllFilesInFolder(folder: string): Promise<{
 			alreadyRead: docAlreadyRead,
 			relPath: file,
 		});
-		bar.increment();
+		process.stdout.write(`\r${embeddingsForAllFiles.length}/${files.length} files`);
 	}
 
-	bar.stop();
+	console.info("");
 	return { embedsForAllFiles: embeddingsForAllFiles, totalCost };
 }
 

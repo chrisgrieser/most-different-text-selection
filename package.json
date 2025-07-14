@@ -15,7 +15,6 @@
 	"main": "main.js",
 	"devDependencies": {
 		"@biomejs/biome": "latest",
-		"@types/cli-progress": "^3.11.6",
 		"@types/node": "^22.5.5",
 		"builtin-modules": "^3.2.0",
 		"esbuild": "^0.25.1",
@@ -23,8 +22,5 @@
 		"markdownlint-cli": "latest",
 		"tslib": "2.6.2",
 		"typescript": "^5.6.2"
-	},
-	"dependencies": {
-		"cli-progress": "^3.12.0"
 	}
 }

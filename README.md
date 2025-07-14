@@ -2,13 +2,12 @@
 Use embedding data from LLMs to determine the "most different" document
 in relation to a set of documents.
 
-<img width="70%" src="https://github.com/user-attachments/assets/558afd51-6823-4ce5-a650-20dc666e155e" />
+<img width="70%" alt="Example report" src="https://github.com/user-attachments/assets/558afd51-6823-4ce5-a650-20dc666e155e"/>
 
 ## To-do
 - [ ] write novelty score into YAML frontmatter of unread documents
-- [ ] use `file:` md links
+- [ ] use `file:` Markdown links
 - [ ] Obsidian function for opening based on novelty-score
-- [ ] use `\r` to log progress, avoids cli progress dependency
 
 ## Table of contents
 

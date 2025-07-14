@@ -2,7 +2,7 @@ set quiet := true
 
 #───────────────────────────────────────────────────────────────────────────────
 
-# run in terminal, due to the progress bar
+# has streaming output
 build-and-run:
     node .esbuild.mjs && node main.js
 
