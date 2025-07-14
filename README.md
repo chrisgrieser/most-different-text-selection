@@ -6,7 +6,6 @@ in relation to a set of documents.
 
 ## To-do
 - [ ] write novelty score into YAML frontmatter of unread documents
-- [ ] use `file:` Markdown links
 - [ ] Obsidian function for opening based on novelty-score
 
 ## Table of contents

@@ -1,6 +1,7 @@
 import { exec } from "node:child_process";
 import { writeFileSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
+import path from "node:path";
 import {
 	EMBEDDING_MODELS,
 	INPUT_FOLDER,
@@ -157,7 +158,12 @@ async function main() {
 	const listOfUnread = Object.entries(noveltyScores)
 		.map(([relPath, score]) => ({ relPath, score }))
 		.sort((a, b) => b.score - a.score)
-		.map((doc) => `- [${doc.score.toFixed(1)}] ${doc.relPath.replace(".md", "")}`);
+		.map((doc) => {
+			const score = doc.score.toFixed(1);
+			const displayPath = doc.relPath.replace(".md", "");
+			const absPath = encodeURI(`file://${path.resolve(INPUT_FOLDER)}/${doc.relPath}`);
+			return `- [${score}] [${displayPath}](${absPath})`;
+		});
 	const listOfRead = readDocs.map((doc) => "- " + doc.relPath.replace(".md", ""));
 	const model = EMBEDDING_MODELS[MODEL_TO_USE];
 	const isoDateLocal = new Date(Date.now() - new Date().getTimezoneOffset() * 60_000)
@@ -186,7 +192,7 @@ async function main() {
 
 	// finish
 	console.info("Done.");
-	if (process.platform === "darwin") exec(`open -R '${REPORT_FILE}'`);
+	if (process.platform === "darwin") exec(`open '${REPORT_FILE}'`);
 }
 
 //──────────────────────────────────────────────────────────────────────────────
