@@ -32,14 +32,14 @@ const frontmatterRegex = /^---\n(.*?)\n---\n(.*)$/s;
 
 async function requestEmbeddingForFile(
 	filepath: string,
-): Promise<{ embedding: number[]; cost: number; docAlreadyRead: boolean }> {
+): Promise<{ embedding: number[]; cost: number; docAlreadyRead: boolean } | undefined> {
 	if (!OPENAI_API_KEY) throw new Error("Please set your OpenAI API key in the settings.ts file.");
 
 	const model = EMBEDDING_MODELS[MODEL_TO_USE];
 
 	const fileRaw = readFileSync(filepath, "utf-8");
 	const [_, frontmatter, fileContent] = fileRaw.match(frontmatterRegex) || ["", "", fileRaw];
-	const tokensPerChar = 4; // rule of thumb: 1 token ~= 4 English chars
+	const tokensPerChar = 3.9; // rule of thumb: 1 token ~= 4 English chars
 	const maxLength = model.maxInputTokens * tokensPerChar;
 	const docAlreadyRead =
 		frontmatter
@@ -60,7 +60,12 @@ async function requestEmbeddingForFile(
 			model: model.name,
 		}),
 	});
-	if (!response.ok) throw new Error(`OpenAI error: ${response.status} ${await response.text()}`);
+	// don't throw error, just skip this file (e.g., when document is too long)
+	if (!response.ok) {
+		console.error(`OpenAI error: ${response.status} – ${filepath}`);
+		console.error(await response.text());
+		return;
+	}
 
 	const data = await response.json();
 	const embedding = data.data[0].embedding;
@@ -85,7 +90,8 @@ async function getEmbedsForAllFilesInFolder(folder: string): Promise<{
 	const embeddingsForAllFiles: EmbeddingInfo[] = [];
 	for (const file of files) {
 		const absPath = path.resolve(INPUT_FOLDER) + "/" + file;
-		const { cost, embedding, docAlreadyRead } = await requestEmbeddingForFile(absPath);
+		const { cost, embedding, docAlreadyRead } = (await requestEmbeddingForFile(absPath)) || {};
+		if (!embedding || docAlreadyRead === undefined) continue;
 		if (cost) totalCost += cost;
 		embeddingsForAllFiles.push({
 			embedding: embedding,

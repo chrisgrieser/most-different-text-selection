@@ -6,7 +6,7 @@ const openaiApiKeyFile =
 export const OPENAI_API_KEY = readFileSync(openaiApiKeyFile, "utf8");
 
 // INPUT
-export const INPUT_FOLDER = "./test-data/";
+export const INPUT_FOLDER = "/Users/chrisgrieser/Vaults/phd-data-analysis/Data/";
 export const YAML_FRONTMATTER_READ_KEY = "read";
 
 // OUTPUT
