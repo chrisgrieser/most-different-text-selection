@@ -6,6 +6,7 @@ year: 2025
 download-date: 2025-07-11T11:39:27+02:00
 url: https://www.theverge.com/news/703091/methane-satellite-methanesat-lost-bezos-edf
 read: false
+novelty-score: 68.0
 ---
 
 A satellite tracking global methane pollution has gone dark, imperiling a mission that garnered enormous support from Jeff Bezos and other big names in tech.

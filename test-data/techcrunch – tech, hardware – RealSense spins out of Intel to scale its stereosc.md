@@ -6,6 +6,7 @@ year: 2025
 download-date: 2025-07-11T12:02:44+02:00
 url: https://techcrunch.com/2025/07/11/realsense-spins-out-of-intel-to-scale-its-stereoscopic-imaging-technology/
 read: false
+novelty-score: 56.5
 ---
 
 ![RealSense, Intel, robotics](https://techcrunch.com/wp-content/uploads/2025/07/Family-no-droplets.png?w=898)

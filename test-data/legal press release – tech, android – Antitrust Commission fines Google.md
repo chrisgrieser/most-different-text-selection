@@ -8,6 +8,7 @@ id: regulatory_statement_1
 download-date: 2024-04-17
 read: false
 mdate: 2024-08-26T15:55
+novelty-score: 42.5
 ---
 
 The European Commission has fined Google €4.34 billion for breaching EU antitrust rules. Since 2011, Google has imposed illegal restrictions on Android device manufacturers and mobile network operators to cement its dominant position in general internet search. [[political regulation|governance/political regulation]] ^id-240626-182239

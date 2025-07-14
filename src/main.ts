@@ -1,6 +1,6 @@
 import { exec } from "node:child_process";
-import { writeFileSync } from "node:fs";
-import { readdir, readFile } from "node:fs/promises";
+import { readFileSync, writeFileSync } from "node:fs";
+import { readdir } from "node:fs/promises";
 import path from "node:path";
 import {
 	EMBEDDING_MODELS,
@@ -8,6 +8,8 @@ import {
 	MODEL_TO_USE,
 	OPENAI_API_KEY,
 	REPORT_FILE,
+	WRITE_SCORE_INTO_INPUT_FILES,
+	YAML_FRONTMATTER_NOVELTY_SCORE_KEY,
 	YAML_FRONTMATTER_READ_KEY,
 } from "src/settings";
 
@@ -23,6 +25,8 @@ type NoveltyScores = {
 	[relPath: string]: number;
 };
 
+const frontmatterRegex = /^---\n(.*?)\n---\n(.*)$/s;
+
 //──────────────────────────────────────────────────────────────────────────────
 
 async function requestEmbeddingForFile(
@@ -35,8 +39,8 @@ async function requestEmbeddingForFile(
 
 	const model = EMBEDDING_MODELS[MODEL_TO_USE];
 
-	const fileRaw = await readFile(filepath, "utf-8");
-	const [frontmatter, fileContent] = fileRaw.match(/^---\n(.*?)\n---\n(.*)/s) || ["", fileRaw];
+	const fileRaw = readFileSync(filepath, "utf-8");
+	const [_, frontmatter, fileContent] = fileRaw.match(frontmatterRegex) || ["", "", fileRaw];
 	const tokensPerChar = 4; // rule of thumb: 1 token ~= 4 English chars
 	const maxLength = model.maxInputTokens * tokensPerChar;
 	const docAlreadyRead =
@@ -82,7 +86,7 @@ async function getEmbedsForAllFilesInFolder(folder: string): Promise<{
 	let totalCost = 0;
 	const embeddingsForAllFiles: EmbeddingInfo[] = [];
 	for (const file of files) {
-		const absPath = INPUT_FOLDER + "/" + file;
+		const absPath = path.resolve(INPUT_FOLDER) + "/" + file;
 		const { cost, embedding, docAlreadyRead } = await requestEmbeddingForFile(absPath);
 		if (cost) totalCost += cost;
 		embeddingsForAllFiles.push({
@@ -171,6 +175,28 @@ function writeReport(
 	writeFileSync(REPORT_FILE, report.join("\n"));
 }
 
+function writeScoresIntoInputFiles(noveltyScores: NoveltyScores): void {
+	console.info("Writing novelty scores into input files…");
+	const scoreKey = YAML_FRONTMATTER_NOVELTY_SCORE_KEY;
+	const scoreRegex = new RegExp(`^${scoreKey}: *([\\d.]+)$`, "m");
+
+	let i = 0;
+	for (const [relPath, noveltyScore] of Object.entries(noveltyScores)) {
+		i++;
+		process.stdout.write(`\r${i}/${Object.keys(noveltyScores).length} files`);
+		const absPath = path.resolve(INPUT_FOLDER) + "/" + relPath;
+		const fileRaw = readFileSync(absPath, "utf-8");
+		const [_, frontmatter, fileContent] = fileRaw.match(frontmatterRegex) || ["", "", fileRaw];
+
+		const hasScore = frontmatter.match(scoreRegex);
+		const newFrontmatter = hasScore
+			? frontmatter.replace(scoreRegex, `${scoreKey}: ${noveltyScore}`)
+			: frontmatter + `\n${scoreKey}: ${noveltyScore.toFixed(1)}`;
+		writeFileSync(absPath, `---\n${newFrontmatter}\n---\n${fileContent}`);
+	}
+	console.info("");
+}
+
 //──────────────────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -199,6 +225,7 @@ async function main() {
 
 	// OUTPUT
 	writeReport(noveltyScores, readDocs, totalCost);
+	if (WRITE_SCORE_INTO_INPUT_FILES) writeScoresIntoInputFiles(noveltyScores);
 	console.info("Done.");
 	if (process.platform === "darwin") exec(`open '${REPORT_FILE}'`);
 }

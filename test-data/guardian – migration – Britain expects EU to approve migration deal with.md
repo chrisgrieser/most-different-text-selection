@@ -6,6 +6,7 @@ year: 2025
 download-date: 2025-07-11T11:42:14+02:00
 url: https://www.theguardian.com/uk-news/2025/jul/11/uk-expects-eu-approve-migrants-return-deal-france-yvette-cooper
 read: false
+novelty-score: 67.7
 ---
 
 ![People sit on a dinghy as it prepares to sail into the Channel](https://i.guim.co.uk/img/media/d028b5ddec33edcc480d25fea2427dd4a96304b3/592_0_4167_3334/master/4167.jpg?width=620&dpr=2&s=none&crop=none)

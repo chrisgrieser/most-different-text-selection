@@ -7,6 +7,7 @@ download-date: 2025-07-11T11:41:55+02:00
 url: https://www.nytimes.com/article/best-restaurants-los-angeles.html
 read: false
 mdate: 2025-07-11T11:42
+novelty-score: 71.5
 ---
 
 You have a preview view of this article while we are checking your access. When we have confirmed access, the full article content will load.

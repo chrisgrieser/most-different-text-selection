@@ -8,6 +8,7 @@ id: earnings_call_101
 download-date: 2024-03-25
 read: false
 mdate: 2024-08-15T18:04
+novelty-score: 47.9
 ---
 
 Alphabet Inc. (NASDAQ:[GOOG](https://seekingalpha.com/symbol/GOOG?hasComeFromMpArticle=false&source=content_type%253Areact%257Csection%253Amain_content%257Cbutton%253Abody_link "Alphabet Inc.")) Q2 2022 Results Conference Call July 26, 2022 5:00 PM ET

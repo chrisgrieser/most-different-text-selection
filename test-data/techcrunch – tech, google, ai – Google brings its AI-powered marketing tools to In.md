@@ -7,6 +7,7 @@ download-date: 2025-07-11T11:38:47+02:00
 url: https://techcrunch.com/2025/07/09/google-brings-its-ai-powered-marketing-tools-to-india-after-google-tax-repeal/
 read: false
 mdate: 2025-07-11T11:39
+novelty-score: 50.8
 ---
 
 ![Google sign](https://techcrunch.com/wp-content/uploads/2024/12/GettyImages-1935927066.jpg?w=1024)

@@ -7,6 +7,7 @@ download-date: 2025-07-11T11:50:51+02:00
 url: https://edition.cnn.com/2025/07/09/investing/nvidia-is-the-first-usd4-trillion-company
 read: false
 mdate: 2025-07-11T11:57
+novelty-score: 53.8
 ---
 
 ![Taiwanese CEO of NVIDIA Jensen Huang speaks during a conference as part of the 9th edition of the Vivatech technology startups and innovation fair, at the Dome de Paris in the Porte de Versailles exhibition centre in Paris, on June 11, 2025.](https://media.cnn.com/api/v1/images/stellar/prod/gettyimages-2219025937.jpg?c=16x9&q=h_383)

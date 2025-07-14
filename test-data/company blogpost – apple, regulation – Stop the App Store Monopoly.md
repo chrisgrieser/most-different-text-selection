@@ -7,6 +7,7 @@ url: https://threema.ch/en/blog/posts/app-store
 id: blogpost_114
 download-date: 2024-03-18
 read: false
+novelty-score: 25.8
 ---
 
 **Despite new regulations, Apple is trying to maintain its monopoly on the distribution of iOS apps, claiming it is necessary for security. The real reasons, however, are of economic nature. Not only does Apple's restrictive model have drawbacks in terms of security, it is inherently hostile to privacy.**

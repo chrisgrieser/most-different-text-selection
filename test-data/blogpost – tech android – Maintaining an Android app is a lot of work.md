@@ -7,6 +7,7 @@ download-date: 2025-06-09T14:21:10+02:00
 url: https://ashishb.net/programming/maintaining-android-app/
 read: false
 mdate: 2025-07-03T18:01
+novelty-score: 43.4
 ---
 
 There was [recent news](https://techcrunch.com/2025/04/29/google-play-sees-47-decline-in-apps-since-start-of-last-year/?utm_source=https://ashishb.net&utm_medium=referral&utm_campaign=blog) about 47% decline in the number of apps on Google Play Store.

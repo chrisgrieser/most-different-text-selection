@@ -7,6 +7,7 @@ download-date: 2025-07-11T11:50:42+02:00
 url: https://edition.cnn.com/2025/07/09/sport/christian-gray-auckland-city-fc-cwc-spt
 read: false
 mdate: 2025-07-11T11:51
+novelty-score: 70.6
 ---
 
 <video></video>

@@ -4,9 +4,6 @@ in relation to a set of documents.
 
 <img width="70%" alt="Example report" src="https://github.com/user-attachments/assets/558afd51-6823-4ce5-a650-20dc666e155e"/>
 
-## To-do
-- [ ] Obsidian function for opening based on novelty-score
-
 ## Table of contents
 
 <!-- toc -->

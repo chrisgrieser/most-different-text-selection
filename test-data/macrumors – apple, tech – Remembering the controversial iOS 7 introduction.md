@@ -7,6 +7,7 @@ download-date: 2025-05-31T11:01:25+02:00
 url: https://9to5mac.com/2025/05/30/remembering-the-controversial-ios-7-introduction/
 read: false
 mdate: 2025-06-09T14:21
+novelty-score: 29.5
 ---
 
 ![](https://9to5mac.com/wp-content/uploads/sites/6/2025/05/ios7-introduction.jpg?quality=82&strip=all&w=1600)

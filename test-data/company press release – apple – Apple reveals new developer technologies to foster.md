@@ -7,6 +7,7 @@ download-date: 2025-05-30T11:49:30+02:00
 url: https://www.apple.com/newsroom/2020/06/apple-reveals-new-developer-technologies-to-foster-the-next-generation-of-apps/
 read: false
 mdate: 2025-05-30T11:52
+novelty-score: 24.7
 ---
 
 Powerful APIs enable developers to create all-new app experiences
