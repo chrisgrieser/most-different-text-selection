@@ -33,10 +33,7 @@ const frontmatterRegex = /^---\n(.*?)\n---\n(.*)$/s;
 async function requestEmbeddingForFile(
 	filepath: string,
 ): Promise<{ embedding: number[]; cost: number; docAlreadyRead: boolean }> {
-	if (!OPENAI_API_KEY) {
-		console.error("Please set your OpenAI API key in the settings.ts file.");
-		process.exit(1);
-	}
+	if (!OPENAI_API_KEY) throw new Error("Please set your OpenAI API key in the settings.ts file.");
 
 	const model = EMBEDDING_MODELS[MODEL_TO_USE];
 
@@ -179,10 +176,7 @@ function writeScoresIntoInputFiles(noveltyScores: NoveltyScore[]): void {
 	const scoreKey = YAML_FRONTMATTER_NOVELTY_SCORE_KEY;
 	const scoreRegex = new RegExp(`^${scoreKey}: *([\\d.]+)$`, "m");
 
-	let i = 0;
 	for (const { relPath, score } of noveltyScores) {
-		i++;
-		process.stdout.write(`\r${i}/${Object.keys(noveltyScores).length} unread files`);
 		const absPath = path.resolve(INPUT_FOLDER) + "/" + relPath;
 		const fileRaw = readFileSync(absPath, "utf-8");
 		const [_, frontmatter, fileContent] = fileRaw.match(frontmatterRegex) || ["", "", fileRaw];
@@ -193,7 +187,6 @@ function writeScoresIntoInputFiles(noveltyScores: NoveltyScore[]): void {
 			: frontmatter + `\n${scoreKey}: ${score.toFixed(1)}`;
 		writeFileSync(absPath, `---\n${newFrontmatter}\n---\n${fileContent}`);
 	}
-	console.info("");
 }
 
 //──────────────────────────────────────────────────────────────────────────────

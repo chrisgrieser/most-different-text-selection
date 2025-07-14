@@ -11,8 +11,8 @@ export const YAML_FRONTMATTER_READ_KEY = "read";
 
 // OUTPUT
 export const REPORT_FILE = "./REPORT.md";
-export const YAML_FRONTMATTER_NOVELTY_SCORE_KEY = "novelty-score";
 export const WRITE_SCORE_INTO_INPUT_FILES = true;
+export const YAML_FRONTMATTER_NOVELTY_SCORE_KEY = "novelty-score";
 
 // MODEL SETTINGS
 export const EMBEDDING_MODELS = {
