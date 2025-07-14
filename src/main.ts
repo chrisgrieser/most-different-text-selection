@@ -19,6 +19,10 @@ type EmbeddingInfo = {
 	relPath: string;
 };
 
+type NoveltyScores = {
+	[relPath: string]: number;
+};
+
 //──────────────────────────────────────────────────────────────────────────────
 
 async function requestEmbeddingForFile(
@@ -70,6 +74,7 @@ async function getEmbedsForAllFilesInFolder(folder: string): Promise<{
 	const files = (await readdir(folder, { recursive: true })).filter((file) =>
 		file.endsWith(".md"),
 	);
+	if (files.length === 0) throw new Error("No markdown files found in input folder.");
 
 	const model = EMBEDDING_MODELS[MODEL_TO_USE];
 	console.info(`Request embeddings from ${model.provider} (${model.name})…`);
@@ -106,55 +111,30 @@ function elemwiseAvgVector(vectors: number[][]): number[] {
 	return avg.map((val) => val / vectors.length);
 }
 
-function allCosineDistances(
-	docs: EmbeddingInfo[],
-	toVector: number[],
-): { [relPath: string]: number } {
+function allCosineDistances(docs: EmbeddingInfo[], toVector: number[]): NoveltyScores {
 	console.info("Calculating cosine distances…");
 
 	function cosineSimilarity(a: number[], b: number[]): number {
-		console.assert(a.length === b.length, "Vectors must have the same length");
+		if (a.length !== b.length) throw new Error("Vectors must have the same length");
 		const dotProduct = a.reduce((sum, val, i) => sum + val * b[i], 0);
 		const normA = Math.sqrt(a.reduce((sum, val) => sum + val * val, 0));
 		const normB = Math.sqrt(b.reduce((sum, val) => sum + val * val, 0));
-		console.assert(normA !== 0 && normB !== 0, "Cannot use zero vector");
+		if (normA === 0 || normB === 0) throw new Error("Cannot use zero vector");
 		return dotProduct / (normA * normB);
 	}
 
-	const distances: { [relPath: string]: number } = {};
+	const distances: NoveltyScores = {};
 	for (const doc of docs) {
 		distances[doc.relPath] = cosineSimilarity(doc.embedding, toVector);
 	}
 	return distances;
 }
 
-//──────────────────────────────────────────────────────────────────────────────
-
-async function main() {
-	const { embedsForAllFiles, totalCost } = await getEmbedsForAllFilesInFolder(INPUT_FOLDER);
-
-	// calculate semantic center of read docs
-	const readDocs = embedsForAllFiles.filter((doc) => doc.alreadyRead);
-	const readDocsEmbeds = readDocs.map((doc) => doc.embedding);
-	if (readDocsEmbeds.length === 0) throw new Error("None of the input documents were read.");
-	const centerOfReadDocs = elemwiseAvgVector(readDocsEmbeds);
-
-	// calculate distance of unread docs to semantic center
-	const unreadDocsEmbeds = embedsForAllFiles.filter((doc) => !doc.alreadyRead);
-	const distances = allCosineDistances(unreadDocsEmbeds, centerOfReadDocs);
-
-	// readability/interpretability: normalize to 0-100 and flip, for easier
-	const noveltyScores: { [relPath: string]: number } = {};
-	for (const [relPath, distance] of Object.entries(distances)) {
-		if (distance < 0) {
-			const err =
-				"Expected all distances to be positive (which cosine distances of LLM embeddings usually are).";
-			throw new Error(err);
-		}
-		noveltyScores[relPath] = (1 - distance) * 100;
-	}
-
-	// write report
+function writeReport(
+	noveltyScores: NoveltyScores,
+	readDocs: EmbeddingInfo[],
+	totalCost: number,
+): void {
 	const listOfUnread = Object.entries(noveltyScores)
 		.map(([relPath, score]) => ({ relPath, score }))
 		.sort((a, b) => b.score - a.score)
@@ -181,16 +161,44 @@ async function main() {
 		...listOfRead,
 		"",
 		"## Metadata",
-		`- Input folder: \`${INPUT_FOLDER}\``,
-		"- Read documents: " + readDocsEmbeds.length,
-		"- Unread documents: " + unreadDocsEmbeds.length,
+		`- Input folder: [${INPUT_FOLDER}](file://${path.resolve(INPUT_FOLDER)})`,
+		"- Read documents: " + listOfRead.length,
+		"- Unread documents: " + listOfUnread.length,
 		`- Provider: ${model.name} (${model.provider})`,
 		"- Total cost: $" + totalCost.toFixed(5), // needs this many digits to display anything
 		"- Creation date: " + isoDateLocal,
 	];
 	writeFileSync(REPORT_FILE, report.join("\n"));
+}
 
-	// finish
+//──────────────────────────────────────────────────────────────────────────────
+
+async function main() {
+	const { embedsForAllFiles, totalCost } = await getEmbedsForAllFilesInFolder(INPUT_FOLDER);
+
+	// calculate semantic center of read docs
+	const readDocs = embedsForAllFiles.filter((doc) => doc.alreadyRead);
+	const readDocsEmbeds = readDocs.map((doc) => doc.embedding);
+	if (readDocsEmbeds.length === 0) throw new Error("None of the input documents were read.");
+	const centerOfReadDocs = elemwiseAvgVector(readDocsEmbeds);
+
+	// calculate distance of unread docs to semantic center
+	const unreadDocsEmbeds = embedsForAllFiles.filter((doc) => !doc.alreadyRead);
+	const distances = allCosineDistances(unreadDocsEmbeds, centerOfReadDocs);
+
+	// readability/interpretability: normalize to 0-100 and flip
+	const noveltyScores: NoveltyScores = {};
+	for (const [relPath, distance] of Object.entries(distances)) {
+		if (distance < 0) {
+			const err =
+				"Expected all distances to be positive (which cosine distances of LLM embeddings usually are).";
+			throw new Error(err);
+		}
+		noveltyScores[relPath] = (1 - distance) * 100;
+	}
+
+	// OUTPUT
+	writeReport(noveltyScores, readDocs, totalCost);
 	console.info("Done.");
 	if (process.platform === "darwin") exec(`open '${REPORT_FILE}'`);
 }
