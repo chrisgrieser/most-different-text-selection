@@ -6,12 +6,13 @@ const openaiApiKeyFile =
 export const OPENAI_API_KEY = readFileSync(openaiApiKeyFile, "utf8");
 
 // INPUT
-export const INPUT_FOLDER = "/Users/chrisgrieser/Vaults/phd-data-analysis/Data/";
+export const INPUT_FOLDER = "./test-data/";
 export const YAML_FRONTMATTER_READ_KEY = "read";
+export const SKIP_UNREAD_DOCS_ALREADY_WITH_SCORE = true;
 
 // OUTPUT
 export const REPORT_FILE = "./REPORT.md";
-export const WRITE_SCORE_INTO_INPUT_FILES = true;
+export const WRITE_SCORE_INTO_INPUT_FILES = true; // useful for re-runs
 export const YAML_FRONTMATTER_NOVELTY_SCORE_KEY = "novelty-score";
 
 // MODEL SETTINGS

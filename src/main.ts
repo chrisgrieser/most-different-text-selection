@@ -8,6 +8,7 @@ import {
 	MODEL_TO_USE,
 	OPENAI_API_KEY,
 	REPORT_FILE,
+	SKIP_UNREAD_DOCS_ALREADY_WITH_SCORE,
 	WRITE_SCORE_INTO_INPUT_FILES,
 	YAML_FRONTMATTER_NOVELTY_SCORE_KEY,
 	YAML_FRONTMATTER_READ_KEY,
@@ -39,8 +40,13 @@ async function requestEmbeddingForFile(
 
 	const fileRaw = readFileSync(filepath, "utf-8");
 	const [_, frontmatter, fileContent] = fileRaw.match(frontmatterRegex) || ["", "", fileRaw];
-	const tokensPerChar = 3.9; // rule of thumb: 1 token ~= 4 English chars
+	const tokensPerChar = 3.8; // rule of thumb: 1 token ~= 4 English chars
 	const maxLength = model.maxInputTokens * tokensPerChar;
+
+	const docAlreadyHasScore = frontmatter
+		.split("\n")
+		.some((line) => line.startsWith(YAML_FRONTMATTER_NOVELTY_SCORE_KEY + ":"));
+	if (docAlreadyHasScore && SKIP_UNREAD_DOCS_ALREADY_WITH_SCORE) return;
 	const docAlreadyRead =
 		frontmatter
 			.split("\n")
