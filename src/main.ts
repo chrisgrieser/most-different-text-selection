@@ -1,5 +1,5 @@
 import { exec } from "node:child_process";
-import { readFileSync, writeFileSync } from "node:fs";
+import fs from "node:fs";
 import { readdir } from "node:fs/promises";
 import path from "node:path";
 import {
@@ -38,7 +38,7 @@ async function requestEmbeddingForFile(
 
 	const model = EMBEDDING_MODELS[MODEL_TO_USE];
 
-	const fileRaw = readFileSync(filepath, "utf-8");
+	const fileRaw = fs.readFileSync(filepath, "utf-8");
 	const [_, frontmatter, fileContent] = fileRaw.match(frontmatterRegex) || ["", "", fileRaw];
 	const tokensPerChar = 3.8; // rule of thumb: 1 token ~= 4 English chars
 	const maxLength = model.maxInputTokens * tokensPerChar;
@@ -180,7 +180,8 @@ function writeReport(
 		"- Total cost: $" + totalCost.toFixed(5), // needs this many digits to display anything
 		"- Creation date: " + isoDateLocal,
 	];
-	writeFileSync(REPORT_FILE, report.join("\n"));
+
+	fs.writeFileSync(REPORT_FILE, report.join("\n"));
 }
 
 function writeScoresIntoInputFiles(noveltyScores: NoveltyScore[]): void {
@@ -190,14 +191,14 @@ function writeScoresIntoInputFiles(noveltyScores: NoveltyScore[]): void {
 
 	for (const { relPath, score } of noveltyScores) {
 		const absPath = path.resolve(INPUT_FOLDER) + "/" + relPath;
-		const fileRaw = readFileSync(absPath, "utf-8");
+		const fileRaw = fs.readFileSync(absPath, "utf-8");
 		const [_, frontmatter, fileContent] = fileRaw.match(frontmatterRegex) || ["", "", fileRaw];
 
 		const hasScore = frontmatter.match(scoreRegex);
 		const newFrontmatter = hasScore
 			? frontmatter.replace(scoreRegex, `${scoreKey}: ${score.toFixed(1)}`)
 			: frontmatter + `\n${scoreKey}: ${score.toFixed(1)}`;
-		writeFileSync(absPath, `---\n${newFrontmatter}\n---\n${fileContent}`);
+		fs.writeFileSync(absPath, `---\n${newFrontmatter}\n---\n${fileContent}`);
 	}
 }
 
