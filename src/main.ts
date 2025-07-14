@@ -181,6 +181,7 @@ function writeReport(
 		"- Creation date: " + isoDateLocal,
 	];
 
+	fs.mkdirSync(path.dirname(REPORT_FILE), { recursive: true });
 	fs.writeFileSync(REPORT_FILE, report.join("\n"));
 }
 
