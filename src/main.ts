@@ -21,8 +21,9 @@ type EmbeddingInfo = {
 	relPath: string;
 };
 
-type NoveltyScores = {
-	[relPath: string]: number;
+type NoveltyScore = {
+	relPath: string;
+	score: number;
 };
 
 const frontmatterRegex = /^---\n(.*?)\n---\n(.*)$/s;
@@ -115,7 +116,7 @@ function elemwiseAvgVector(vectors: number[][]): number[] {
 	return avg.map((val) => val / vectors.length);
 }
 
-function allCosineDistances(docs: EmbeddingInfo[], toVector: number[]): NoveltyScores {
+function allCosineDistances(docs: EmbeddingInfo[], toVector: number[]): NoveltyScore[] {
 	console.info("Calculating cosine distances…");
 
 	function cosineSimilarity(a: number[], b: number[]): number {
@@ -127,20 +128,18 @@ function allCosineDistances(docs: EmbeddingInfo[], toVector: number[]): NoveltyS
 		return dotProduct / (normA * normB);
 	}
 
-	const distances: NoveltyScores = {};
-	for (const doc of docs) {
-		distances[doc.relPath] = cosineSimilarity(doc.embedding, toVector);
-	}
-	return distances;
+	return docs.map((doc) => ({
+		relPath: doc.relPath,
+		score: cosineSimilarity(doc.embedding, toVector),
+	}));
 }
 
 function writeReport(
-	noveltyScores: NoveltyScores,
+	noveltyScores: NoveltyScore[],
 	readDocs: EmbeddingInfo[],
 	totalCost: number,
 ): void {
-	const listOfUnread = Object.entries(noveltyScores)
-		.map(([relPath, score]) => ({ relPath, score }))
+	const listOfUnread = noveltyScores
 		.sort((a, b) => b.score - a.score)
 		.map((doc) => {
 			const score = doc.score.toFixed(1);
@@ -175,23 +174,23 @@ function writeReport(
 	writeFileSync(REPORT_FILE, report.join("\n"));
 }
 
-function writeScoresIntoInputFiles(noveltyScores: NoveltyScores): void {
+function writeScoresIntoInputFiles(noveltyScores: NoveltyScore[]): void {
 	console.info("Writing novelty scores into input files…");
 	const scoreKey = YAML_FRONTMATTER_NOVELTY_SCORE_KEY;
 	const scoreRegex = new RegExp(`^${scoreKey}: *([\\d.]+)$`, "m");
 
 	let i = 0;
-	for (const [relPath, noveltyScore] of Object.entries(noveltyScores)) {
+	for (const { relPath, score } of noveltyScores) {
 		i++;
-		process.stdout.write(`\r${i}/${Object.keys(noveltyScores).length} files`);
+		process.stdout.write(`\r${i}/${Object.keys(noveltyScores).length} unread files`);
 		const absPath = path.resolve(INPUT_FOLDER) + "/" + relPath;
 		const fileRaw = readFileSync(absPath, "utf-8");
 		const [_, frontmatter, fileContent] = fileRaw.match(frontmatterRegex) || ["", "", fileRaw];
 
 		const hasScore = frontmatter.match(scoreRegex);
 		const newFrontmatter = hasScore
-			? frontmatter.replace(scoreRegex, `${scoreKey}: ${noveltyScore}`)
-			: frontmatter + `\n${scoreKey}: ${noveltyScore.toFixed(1)}`;
+			? frontmatter.replace(scoreRegex, `${scoreKey}: ${score.toFixed(1)}`)
+			: frontmatter + `\n${scoreKey}: ${score.toFixed(1)}`;
 		writeFileSync(absPath, `---\n${newFrontmatter}\n---\n${fileContent}`);
 	}
 	console.info("");
@@ -211,17 +210,17 @@ async function main() {
 	// calculate distance of unread docs to semantic center
 	const unreadDocsEmbeds = embedsForAllFiles.filter((doc) => !doc.alreadyRead);
 	const distances = allCosineDistances(unreadDocsEmbeds, centerOfReadDocs);
-
-	// readability/interpretability: normalize to 0-100 and flip
-	const noveltyScores: NoveltyScores = {};
-	for (const [relPath, distance] of Object.entries(distances)) {
-		if (distance < 0) {
-			const err =
-				"Expected all distances to be positive (which cosine distances of LLM embeddings usually are).";
-			throw new Error(err);
-		}
-		noveltyScores[relPath] = (1 - distance) * 100;
+	if (distances.some((noveltyScore) => noveltyScore.score < 0)) {
+		throw new Error(
+			"Expected all distances to be positive (which cosine distances of LLM embeddings usually are).",
+		);
 	}
+
+	// readability: normalize to 0-100 and flip
+	const noveltyScores = distances.map((noveltyScore) => ({
+		relPath: noveltyScore.relPath,
+		score: (1 - noveltyScore.score) * 100,
+	}));
 
 	// OUTPUT
 	writeReport(noveltyScores, readDocs, totalCost);
