@@ -6,6 +6,12 @@ set quiet := true
 build-and-run:
     node .esbuild.mjs && node main.js
 
+novelty-scores-from-report:
+    #!/usr/bin/env zsh
+    scores=$(rg --only-matching --pcre2 --no-line-number '(?<=\[)[\d.]+(?=\])' REPORT.md)
+    [[ "$OSTYPE" == "darwin"* ]] && echo "$scores" | pbcopy
+    echo "$scores"
+
 [macos]
 open-input-folder:
     #!/usr/bin/env zsh
