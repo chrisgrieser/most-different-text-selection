@@ -93,22 +93,22 @@ async function getEmbedsForAllFilesInFolder(folder: string): Promise<{
 	console.info(`Request embeddings from ${model.provider} (${model.name})…`);
 
 	let totalCost = 0;
-	const embeddingsForAllFiles: EmbeddingInfo[] = [];
+	const embedsForAllFiles: EmbeddingInfo[] = [];
 	for (const file of files) {
 		const absPath = path.resolve(INPUT_FOLDER) + "/" + file;
 		const { cost, embedding, docAlreadyRead } = (await requestEmbeddingForFile(absPath)) || {};
 		if (!embedding || docAlreadyRead === undefined) continue;
 		if (cost) totalCost += cost;
-		embeddingsForAllFiles.push({
+		embedsForAllFiles.push({
 			embedding: embedding,
 			alreadyRead: docAlreadyRead,
 			relPath: file,
 		});
-		process.stdout.write(`\r${embeddingsForAllFiles.length}/${files.length} files`);
+		process.stdout.write(`\r${embedsForAllFiles.length}/${files.length} files`);
 	}
 
 	console.info("");
-	return { embedsForAllFiles: embeddingsForAllFiles, totalCost };
+	return { embedsForAllFiles, totalCost };
 }
 
 function elemwiseAvgVector(vectors: number[][]): number[] {
