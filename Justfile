@@ -3,8 +3,8 @@ set quiet := true
 #───────────────────────────────────────────────────────────────────────────────
 
 # has streaming output
-build-and-run:
-    node .esbuild.mjs && node main.js
+run:
+    npx tsx ./src/main.ts
 
 novelty-scores-from-report:
     #!/usr/bin/env zsh

@@ -115,8 +115,7 @@ possible, e.g., to complement qualitative analysis with
 
    ```bash
    npm install
-   node .esbuild.mjs 
-   node main.js
+   npx tsx ./src/main.ts
    ```
 
 3. A summarizing report is saved in the file `./REPORT.md`.
